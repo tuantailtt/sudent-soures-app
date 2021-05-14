@@ -12,6 +12,7 @@ function StudentList() {
     const [valueSearch, setValueSearch] = useState('');
     const [attributeSearch, setAttributeSearch] = useState(['name']);
     const [visibleModal, setVisibleModal] = useState(false);
+    const [refresh, setRefresh] = useState(false);
     const [form] = Form.useForm();
 
     const columns = [
@@ -46,11 +47,8 @@ function StudentList() {
     function deleteStudent(id){
         axios.delete('/api/students/'+id)
             .then(function(response){
-                console.log(response);
-                let list = dataSource.filter(item => item.key !== id);
-                console.log(list);
-                setData(list);
-                setDataSource(list)
+                setData(data.filter(item => item.key !== id));
+                setDataSource(dataSource.filter(item => item.key !== id))
             });
     }
 
@@ -67,7 +65,8 @@ function StudentList() {
         axios.post('/api/students/',studentDto)
             .then(function(response){
                 console.log(response);
-               
+                setRefresh(!refresh);
+                setVisibleModal(false);
             });
     }
     
@@ -133,7 +132,7 @@ function StudentList() {
                     id: row.id,
                     name: row.name,
                     yearOld: row.yearOld,
-                    sex: row.sex===true?"F":"M",
+                    sex: row.sex===true?"M":row.sex===false?"F":"",
                     passportNumber: row.passportNumber,
                     phoneNumber: row.phoneNumber,
                     address: row.address
@@ -141,7 +140,7 @@ function StudentList() {
                 setData(list);
                 setDataSource(list);
             })
-        }, []);
+        }, [refresh]);
     
   return (
         <div className="App">
@@ -185,12 +184,13 @@ function StudentList() {
                         onCancel={()=>{setVisibleModal(false);form.resetFields()}}
                     >
                         <Form {...layout} form={form} onFinish={createStudent}>
-                            {/* Any input */}
                             <Form.Item
                                 name={'name'}
                                 label="Name"
                                 rules={[
                                 {
+                                    min:2,
+                                    max:50,
                                     required: true,
                                 },]}
                             >
@@ -202,7 +202,7 @@ function StudentList() {
                                 rules={[
                                 {
                                     type: 'number',
-                                    min: 0,
+                                    min: 1,
                                     max: 150,
                                 },]}
                             >
@@ -222,10 +222,6 @@ function StudentList() {
                             <Form.Item
                                 name={'passportNumber'}
                                 label="Passport Number"
-                                rules={[
-                                {
-                                    required: true,
-                                },]}
                             >
                                 <Input />
                             </Form.Item>
@@ -247,7 +243,7 @@ function StudentList() {
             </Row>
             <Table dataSource={dataSource} 
                 columns={columns} 
-                pagination={{ position: ["bottomCenter"] }}
+                pagination={{ position: ["bottomCenter"] ,pageSize: 5 }}
             />
         </div>
     </div>
