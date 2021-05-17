@@ -1,6 +1,9 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select,Form } from 'antd';
+import { Button, Table, Modal, Input, Row, Col, Select } from 'antd';
+import { CreateModal } from './create-modal';
+import { EditModal } from './edit-modal';
+
 
 const { confirm } = Modal;
 const { Option } = Select;
@@ -11,30 +14,43 @@ function CourseList(){
     const [dataSource, setDataSource] = useState([]);
     const [valueSearch, setValueSearch] = useState('');
     const [attributeSearch, setAttributeSearch] = useState(['name']);
-    const [visibleModal, setVisibleModal] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState({});
+    const [isCreateModalShown, setIsCreateModalShown] = useState(false);
+    const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
-    const [form] = Form.useForm();
+
 
     const columns = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
         { title: 'Description', dataIndex: 'description',key: 'description'},
         {
             title: 'Action',dataIndex: '',key: 'x',align:"center",
-            render: (course,record) => (
+            render: (course) => (
                 <div>
-                    <Button type="primary" onClick={() => showDetail(record.key)}>Detail</Button>
+                    <Button type="primary" onClick={() => showEditModal(course)}>Edit</Button>
                     <Button type="danger" onClick={() => showDeleteConfirm(course)}>Delete</Button>
                 </div>)
         }
     ];
-    const layout = {
-        labelCol: {
-          span: 7,
-        },
-        wrapperCol: {
-          span: 17,
-        },
+    
+    const handleCreateModalClose = () => {
+        setIsCreateModalShown(false);
     };
+    const showCreateModal = () => {
+        setIsCreateModalShown(true);
+    }
+    
+    const handleEditModalClose = () => {
+        setIsEditModalShown(false);
+    };
+    const showEditModal = (course) => {
+        setSelectedCourse(course)
+        console.log('course',course)
+        setIsEditModalShown(true);
+    }
+
+
+    
 
     function deleteCourse(id){
         axios.delete('/api/courses/'+id)
@@ -61,14 +77,17 @@ function CourseList(){
         });
     }
 
-    function showDetail(key){
-        console.log(key);
-    }
     function handleChangeValueSearch(e){
         console.log('param',attributeSearch);
         const currValue = e.target.value;
-        setValueSearch(currValue);
-        filterDataSource(currValue,attributeSearch);
+        if(currValue !== ""){
+            setValueSearch(currValue);
+            filterDataSource(currValue,attributeSearch);
+        }else{
+            setValueSearch(currValue);
+            setDataSource(data);
+        }
+        
     }
 
     function filterDataSource(value,params){
@@ -96,28 +115,9 @@ function CourseList(){
         }
     }
 
-    function showModal(){
-        setVisibleModal(true);
+    function refreshTable(){
+        setRefresh(!refresh);
     }
-
-    function createCourse(value){
-        console.log(value);
-        let courseDto = {
-            "name": value.name === undefined ? null : value.name,
-            "description": value.description === undefined ? null : value.description,
-        }
-        axios.post('/api/courses/',courseDto)
-            .then(function(response){
-                console.log(response);
-                setRefresh(!refresh);
-                setVisibleModal(false);
-            }).catch(function(error){
-                alert("Create course: failed");
-                console.log(error);
-            })
-    }
-
-
 
     useEffect(() => {
         axios.get('/api/courses')
@@ -127,7 +127,8 @@ function CourseList(){
                     key: row.id,
                     id: row.id,
                     name: row.name,
-                    description: row.description
+                    description: row.description,
+                    students: row.students
                 }));
                 setData(list);
                 setDataSource(list);
@@ -137,6 +138,8 @@ function CourseList(){
     return (
         <div className="App">
             <div>
+                <CreateModal show={isCreateModalShown} handleClose={handleCreateModalClose} refreshTable={refreshTable}/>
+                <EditModal show={isEditModalShown} handleClose={handleEditModalClose} course={selectedCourse} refreshTable={refreshTable}/>
                 <Row gutter={16}>
                     <Col className="gutter-row" span={6}>
                         <Input
@@ -158,46 +161,17 @@ function CourseList(){
                         <Option value="description">Description</Option>
                     </Select>
                     </Col>
-                    <Col className="gutter-row" span={6}>
-                        <div >col-6</div>
+                    <Col className="gutter-row" span={4}>
                     </Col>
-                    <Col className="gutter-row" span={6}>
-                        <Button onClick={showModal}>Create</Button>
-                        <Modal
-                            visible={visibleModal}
-                            title="Create new student"
-                            okText= 'Create'
-                            onOk={form.submit}
-                            onCancel={()=>{setVisibleModal(false);form.resetFields()}}
-                        >
-                            <Form {...layout} form={form} onFinish={createCourse}>
-                                <Form.Item
-                                    name={'name'}
-                                    label="Name"
-                                    rules={[
-                                    {
-                                        min:2,
-                                        required: true,
-                                    },]}
-                                >
-                                    <Input />
-                                </Form.Item>
-                                <Form.Item
-                                    name={'description'}
-                                    label="Description"
-                                    
-                                >
-                                    <Input />
-                                </Form.Item>
-                            </Form>
-                        </Modal>
+                    <Col className="gutter-row" span={8}>
+                        <Button onClick={showCreateModal}>Create</Button>
                     </Col>
                 </Row>
             </div>
            <div>
                 <Table dataSource={dataSource} 
                 columns={columns} 
-                pagination={{ position: ["bottomCenter"] }}
+                pagination={{ position: ["bottomCenter"], pageSize: 8}}
                 />
             </div>
         </div>
