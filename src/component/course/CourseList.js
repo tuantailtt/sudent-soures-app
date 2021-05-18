@@ -1,8 +1,9 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select } from 'antd';
+import { Button, Table, Modal, Input, Row, Col, Select, message } from 'antd';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
+// import { Basic } from './create-modal-formik';
 
 
 const { confirm } = Modal;
@@ -18,7 +19,13 @@ function CourseList(){
     const [isCreateModalShown, setIsCreateModalShown] = useState(false);
     const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
-
+    // const [isCreateFormikModalShown, setIsCreateFormikModalShown] = useState(false);
+    // const handleCreateFormikModalClose = () => {
+    //     setIsCreateFormikModalShown(false);
+    // };
+    // const showCreateFormikModal = () => {
+    //     setIsCreateFormikModalShown(true);
+    // }
 
     const columns = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
@@ -27,11 +34,13 @@ function CourseList(){
             title: 'Action',dataIndex: '',key: 'x',align:"center",
             render: (course) => (
                 <div>
-                    <Button type="primary" onClick={() => showEditModal(course)}>Edit</Button>
-                    <Button type="danger" onClick={() => showDeleteConfirm(course)}>Delete</Button>
+                    <Button type="primary" onClick={() => showEditModal(course)} style={{margin:"0px 2px 0px 2px"}}>Edit</Button>
+                    <Button type="danger" onClick={() => showDeleteConfirm(course)} style={{margin:"0px 2px 0px 2px"}}>Delete</Button>
                 </div>)
         }
     ];
+
+    
     
     const handleCreateModalClose = () => {
         setIsCreateModalShown(false);
@@ -57,6 +66,9 @@ function CourseList(){
             .then(function(response){
                 setData(data.filter(item => item.key !== id));
                 setDataSource(dataSource.filter(item => item.key !== id))
+                message.success('Delete successful');
+            }).catch(function(error){
+                message.error('Delete failed');
             })
     }
     
@@ -139,7 +151,8 @@ function CourseList(){
         <div className="App">
             <div>
                 <CreateModal show={isCreateModalShown} handleClose={handleCreateModalClose} refreshTable={refreshTable}/>
-                <EditModal show={isEditModalShown} handleClose={handleEditModalClose} course={selectedCourse} refreshTable={refreshTable}/>
+             <EditModal show={isEditModalShown} handleClose={handleEditModalClose} course={selectedCourse} refreshTable={refreshTable}/>
+                {/* <Basic show={isCreateFormikModalShown} handleClose={handleCreateFormikModalClose} refreshTable={refreshTable}/> */}
                 <Row gutter={16}>
                     <Col className="gutter-row" span={6}>
                         <Input
@@ -164,7 +177,8 @@ function CourseList(){
                     <Col className="gutter-row" span={4}>
                     </Col>
                     <Col className="gutter-row" span={8}>
-                        <Button onClick={showCreateModal}>Create</Button>
+                        <Button onClick={showCreateModal} type="primary">Create</Button>
+                        {/* <Button onClick={showCreateFormikModal}>Createformik</Button> */}
                     </Col>
                 </Row>
             </div>

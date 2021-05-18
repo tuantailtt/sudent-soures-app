@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select} from 'antd';
+import { Button, Table, Modal, Input, Row, Col, Select, message} from 'antd';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
 import { RegisterModal } from './register-modal';
@@ -21,9 +21,9 @@ function StudentList() {
     const [refresh, setRefresh] = useState(false);
 
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld'},
-        { title: 'Sex', dataIndex: 'sex', key: 'sex'},
+        { title: 'Name', dataIndex: 'name',key: 'name',sorter: (a, b) => a.name.length - b.name.length}, 
+        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: (a, b) => a.yearOld - b.yearOld},
+        { title: 'Sex', dataIndex: 'sex', key: 'sex',sorter: (a, b) => a.sex.length - b.sex.length},
         { title: 'Address', dataIndex: 'address',key: 'address'},
         { title: 'Passport number', dataIndex: 'passportNumber',key: 'passportNumber'},
         { title: 'Phone number',dataIndex: 'phoneNumber',key: 'phoneNumber'},
@@ -31,9 +31,9 @@ function StudentList() {
             title: 'Action',dataIndex: '',key: 'x',align:"center",
             render: (student) => (
                 <div>
-                    <Button type="primary" onClick={() => showEditModal(student)}>Edit</Button>
-                    <Button type="default" onClick={() => showRegisterModal(student)}>Rigister</Button>
-                    <Button type="danger" onClick={() => showDeleteConfirm(student)}>Delete</Button>
+                    <Button type="primary" onClick={() => showEditModal(student)}  style={{margin:"0px 2px 0px 2px"}}>Edit</Button>
+                    <Button type="default" onClick={() => showRegisterModal(student)} style={{margin:"0px 2px 0px 2px"}}>Courses</Button>
+                    <Button type="danger" onClick={() => showDeleteConfirm(student)}  style={{margin:"0px 2px 0px 2px"}}>Delete</Button>
                 </div>)
         }
     ];
@@ -65,7 +65,10 @@ function StudentList() {
             .then(function(response){
                 setData(data.filter(item => item.key !== id));
                 setDataSource(dataSource.filter(item => item.key !== id))
-            });
+                message.success('Delete successful');
+            }).catch(function(error){
+                message.error('Delete successful');
+            })
     }
     
     function showDeleteConfirm(student) {
@@ -179,11 +182,11 @@ function StudentList() {
                    <Option value="phoneNumber">Phone Number</Option>
                 </Select>
                 </Col>
-                <Col className="gutter-row" span={6}>
+                <Col className="gutter-row" span={5}>
                    
                 </Col>
-                <Col className="gutter-row" span={6}>
-                    <Button onClick={showCreateModal}>Create</Button>
+                <Col className="gutter-row" span={7}>
+                    <Button type="primary" onClick={showCreateModal}>Create</Button>
                 </Col>
             </Row>
             <Table dataSource={dataSource} 

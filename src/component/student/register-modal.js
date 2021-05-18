@@ -1,6 +1,6 @@
 import React, { useEffect, useState} from 'react';
 import axios from 'axios';
-import { Modal, Button,Row, Col, Table  ,Space, Card } from 'antd';
+import { Modal, Button,Row, Col, Table  ,Space, Card,message } from 'antd';
 const { confirm } = Modal;
 
 
@@ -44,9 +44,6 @@ export const RegisterModal = ({ show, handleClose,student , refreshTable }) =>{
             cancelText: 'No',
             onOk() {
                 updateStudent();
-                handleClose();
-                refreshTable();
-
             },
             onCancel() {
                 console.log('Cancel');
@@ -69,14 +66,17 @@ export const RegisterModal = ({ show, handleClose,student , refreshTable }) =>{
         axios.put("/api/students/"+student.id,studentDto)
             .then(function(response){
                 console.log('success');
+                handleClose();
+                message.success('Update successful');
+                refreshTable();
             })
             .catch(function (error) {
-                alert(error);
+                message.error('Delete failed');
               })
     } 
 
     useEffect(() => {
-        if(show) {
+        if(Object.values(student).length !== 0 && show===true) {
             setCoursesRegisted(student.courses.map(row => ({
                 key: row.id,
                 id: row.id,
@@ -101,7 +101,7 @@ export const RegisterModal = ({ show, handleClose,student , refreshTable }) =>{
                     setCoursesUnregisted(coursesNotRegistedList)
                 });
         }
-    }, [show])
+    }, [student,show])
 
     return (
         <Modal

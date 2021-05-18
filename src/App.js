@@ -6,10 +6,9 @@ import {
   Route,
   Link
 } from "react-router-dom";
-import {Layout, Menu, Breadcrumb,Space,Card} from 'antd';
+import {Layout, Menu, Breadcrumb, Card} from 'antd';
 import { 
   DesktopOutlined,
-  PieChartOutlined,
   FileOutlined,
   TeamOutlined,
   UserOutlined,
@@ -38,24 +37,27 @@ function App() {
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
           <div className="logo" />
+          <br></br>
+          <br></br>
+          <br></br>
           <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-            <Menu.Item key="1" icon={<PieChartOutlined />}>
-              <Link to="/students">Students management</Link>
+            <Menu.Item key="1" icon={<UserOutlined />}>
+              <Link to="/admin/students">Students</Link>
             </Menu.Item>
             <Menu.Item key="2" icon={<DesktopOutlined />}>
-              <Link to="/courses">Courses management</Link>
+              <Link to="/admin/courses">Courses</Link>
             </Menu.Item>
-            <SubMenu key="sub1" icon={<UserOutlined />} title="User">
+            <SubMenu key="sub1" icon={<UserOutlined />} title="">
               <Menu.Item key="3">Tom</Menu.Item>
               <Menu.Item key="4">Bill</Menu.Item>
               <Menu.Item key="5">Alex</Menu.Item>
             </SubMenu>
-            <SubMenu key="sub2" icon={<TeamOutlined />} title="Team">
+            <SubMenu key="sub2" icon={<TeamOutlined />} title="">
               <Menu.Item key="6">Team 1</Menu.Item>
               <Menu.Item key="8">Team 2</Menu.Item>
             </SubMenu>
             <Menu.Item key="9" icon={<FileOutlined />}>
-              Files
+              
             </Menu.Item>
           </Menu>
         </Sider>
@@ -63,21 +65,21 @@ function App() {
           <Header className="site-layout-background" style={{ padding: 0 }} />
           <Content style={{ margin: '0 16px' }}>
             <Switch>
-              <Route path="/students">
+              <Route path="/admin/students">
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Students</Breadcrumb.Item>
                 </Breadcrumb>
-                <Card title="Students management" >
+                <Card title="Students Management" >
                   <StudentList />
                 </Card>
               </Route>
-              <Route path="/courses">
+              <Route path="/admin/courses">
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Cousrses</Breadcrumb.Item>
                 </Breadcrumb>
-                <Card title="Courses management">
+                <Card title="Courses Management ">
                   <CourseList />
                 </Card>
               </Route>
@@ -86,26 +88,6 @@ function App() {
           <Footer style={{ textAlign: 'center' }}>Ant Design ©2018 Created by Ant UED</Footer>
         </Layout>
       </Layout>
-      {/* <div className="App">
-          <nav>
-            <ul>
-              <li>
-                <Link to="/students">Students management</Link>
-              </li>
-              <li>
-                <Link to="/courses">Courses management</Link>
-              </li>
-            </ul>
-          </nav>
-          <Switch>
-            <Route path="/students">
-              <StudentList />
-            </Route>
-            <Route path="/courses">
-              <CourseList />
-            </Route>
-          </Switch>
-      </div> */}
     </Router>
   );
 }

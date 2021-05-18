@@ -1,6 +1,7 @@
 import React, { useEffect, useState} from 'react';
 import axios from 'axios';
-import { Modal, Input, Form,Row, Col,Table,Card ,Space, Button} from 'antd';
+import { Modal, Input, Form,Row, Col,Table,Card ,Space, Button, message} from 'antd';
+const { confirm } = Modal;
 
 
 export const EditModal = ({ show, handleClose, course, refreshTable }) => {
@@ -8,6 +9,7 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
     const [studentRegisted, setStudentRegisted] = useState([]);
     const [studentUnregisted, setStudentUnregisted] = useState([]);
     const [form] = Form.useForm();
+
     const layout = {
         labelCol: {
           span: 5,
@@ -32,8 +34,6 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
             render: (student) => <Button type="primary" onClick={() => registerStudent(student)}>Register</Button>
         }
     ];
-
-    
     
     function registerStudent(student){
         setStudentUnregisted(studentUnregisted.filter(element => element.id !== student.id ));
@@ -43,6 +43,23 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
         setStudentRegisted(studentRegisted.filter(element => element.id !== student.id ));
         setStudentUnregisted([...[student], ...studentUnregisted] );
     }
+
+    function showSaveConfirm(value){
+        confirm({
+            title: 'Are you sure save this your changed ?',
+            content: "",
+            okText: 'Yes',
+            okType: 'primary',
+            cancelText: 'No',
+            onOk() {
+                updateCourse(value);
+            },
+            onCancel() {
+                console.log('Cancel');
+            },
+        });
+    };
+
     function updateCourse(value){
         let courseDto = {
             "name": value.name === undefined ? null : value.name,
@@ -56,14 +73,16 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
             .then(function(response){
                 console.log(response);
                 handleClose();
+                message.success('Update successful');
                 refreshTable()
             })
             .catch(function (error) {
-                alert(error);
+                message.error('Update failed');
               })
     }
     useEffect(() => {
-        if(show) {
+        if(Object.values(course).length !== 0){
+            console.log('c',course)
             form.setFieldsValue({
                 name: course.name,
                 description: course.description
@@ -93,8 +112,15 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 }).catch(function(error){
                     console.log('err',error);
                 });
+        }else{
+            form.setFieldsValue({
+                name: null,
+                description:  null
+            });
         }
-    },[show])
+       
+    },[course]);
+    
     return (
         
         <Modal
@@ -104,8 +130,14 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
             onOk={form.submit}
             onCancel={handleClose}
             width={1000}
+            forceRender={true}
+
         >
-            <Form {...layout} form={form} onFinish={updateCourse}>
+            <Form 
+                {...layout} 
+                form={form} 
+                onFinish={showSaveConfirm}
+            > 
                 <Row gutter={14}>
                     <Col className="gutter-row" span={12}>
                         <Form.Item

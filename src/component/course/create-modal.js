@@ -1,6 +1,7 @@
 import React, { useEffect,useState} from 'react';
 import axios from 'axios';
-import { Modal, Input, Form, Row, Col,Table,Card ,Space, Button } from 'antd';
+import { Modal, Input, Form, Row, Col,Table,Card ,Space, Button ,message} from 'antd';
+const { confirm } = Modal;
 
 
 export const CreateModal = ({ show, handleClose, refreshTable }) =>{
@@ -40,13 +41,27 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
         setStudentRegisted(studentRegisted.filter(element => element.id !== student.id ));
         setStudentUnregisted([...[student], ...studentUnregisted] );
     }
-    
+    function showCreateConfirm(value){
+        confirm({
+            title: 'Are you sure create new Course ?',
+            content: "",
+            okText: 'Yes',
+            okType: 'primary',
+            cancelText: 'No',
+            onOk() {
+                createCourse(value);
+            },
+            onCancel() {
+                console.log('Cancel');
+            },
+        });
+    };
 
     function createCourse(value){
         console.log(value);
         let courseDto = {
-            "name": value.name === undefined ? null : value.name,
-            "description": value.description === undefined ? null : value.description,
+            "name": value.nameCreate === undefined ? null : value.nameCreate,
+            "description": value.descriptionCreate === undefined ? null : value.descriptionCreate,
             "students": studentRegisted.map(student => {
                 return {"id":student.id}
             })
@@ -55,16 +70,18 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
             .then(function(response){
                 console.log(response);
                 handleClose();
+                message.success('Create successful');
                 refreshTable();
+
             }).catch(function(error){
-                alert("Create course: failed");
+                message.error('Create failed');
             })
     }
     useEffect(() => {
         if(!show) {
             form.setFieldsValue({
-                name: null,
-                description: null
+                nameCreate: null,
+                descriptionCreate: null
             });
         }else{
             axios.get("/api/students")
@@ -91,25 +108,34 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
             onOk={form.submit}
             onCancel={handleClose}
             width={1000}
+            forceRender={true}
+
         >
-            <Form {...layout} form={form} onFinish={createCourse}>
+            <Form {...layout} form={form} onFinish={showCreateConfirm}>
                 <Row gutter={14}>
-                    <Col className="gutter-row" span={12}>
+                    <Col className="gutter-row" span={11}>
                         <Form.Item
-                            name={'name'}
+                            name={'nameCreate'}
                             label="Name"
                             rules={[
-                            {
-                                min:2,
-                                required: true,
-                            },]}
+                                {
+                                    min:2,
+                                    max:50,
+                                    message: "Name must be between 2 and 50 characters",
+                                    
+                                },
+                                {
+                                    required: true,
+                                    message: "Name is not required"
+                                }
+                            ]}
                         >
                             <Input />
                         </Form.Item>
                     </Col>
-                    <Col className="gutter-row" span={12}>
+                    <Col className="gutter-row" span={11}>
                         <Form.Item
-                            name={'description'}
+                            name={'descriptionCreate'}
                             label="Description"
                         >
                             <Input />
