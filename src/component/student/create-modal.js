@@ -41,6 +41,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
             "phoneNumber": value.phoneNumberCreate === undefined ? null : value.phoneNumberCreate,
             "address": value.addressCreate === undefined ? null : value.addressCreate,
         }
+        console.log("studentDto",studentDto)
         axios.post('/api/students/',studentDto)
             .then(function(response){
                 console.log(response);
@@ -63,6 +64,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
                 addressCreate:null
             })
         }
+    // eslint-disable-next-line
     }, [show])
 
     
@@ -124,21 +126,39 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
                     rules={[
                         {
                             min: 5,
-                            max: 20,
-                            message: "Passport number must be between 5 and 20 characters",
-                        },]}
+                            max: 15,
+                            message: "Passport number must be between 5 and 15 characters",
+                        },{
+                            pattern:/^[0-9]+$/,
+                            message: "Passport number should be number string"
+                        }]}
                 >
                     <Input />
                 </Form.Item>
                 <Form.Item
                     name={'phoneNumberCreate'}
                     label="Phone Number"
+                    rules={[
+                        {
+                            min: 5,
+                            max: 15,
+                            message: "Phone number must be between 5 and 15 characters",
+                            
+                        },{
+                            pattern:/^[0-9]+$/,
+                            message: "Phone number should be number string"
+                        }]}
                 >
                     <Input />
                 </Form.Item>
                 <Form.Item
                     name={'addressCreate'}
                     label="Address"
+                    rules={[
+                        {
+                            max: 254,
+                            message: "Address must be at most 254 charcaters",
+                        },]}
                 >
                     <Input />
                 </Form.Item>

@@ -27,28 +27,24 @@ export const EditModal = ({ show, handleClose, student, refreshTable }) => {
                 updateStudent(value);
             },
             onCancel() {
-                console.log('Cancel');
             },
         });
     };
 
     function updateStudent(value){
-        console.log('value',value);
         let studentDto = {
             "name": value.name === undefined ? null : value.name,
             "yearOld": value.yearOld === undefined ? null : value.yearOld,
             "sex": value.sex === undefined ? null : value.sex ==="Female"? false:true,
             "passportNumber": value.passportNumber === undefined || value.passportNumber === "" ? null: value.passportNumber,
             "phoneNumber": value.phoneNumber === undefined || value.phoneNumber === "" ? null : value.phoneNumber,
-            "address": value.address === undefined || value.phoneNumber === ""? null : value.address,
+            "address": value.address === undefined || value.address === ""? null : value.address,
             "courses": student.courses.map(course => {
                 return {"id":course.id}
             })
         }
-        console.log(studentDto);
         axios.put('/api/students/'+student.id,studentDto)
             .then(function(response){
-                console.log(response);
                 handleClose();
                 message.success('Update successful');
                 refreshTable();
@@ -77,6 +73,7 @@ export const EditModal = ({ show, handleClose, student, refreshTable }) => {
                 address:null
             })
         }
+    // eslint-disable-next-line
     }, [student,show])
 
     
@@ -138,8 +135,8 @@ export const EditModal = ({ show, handleClose, student, refreshTable }) => {
                     rules={[
                         {
                             min: 5,
-                            max: 20,
-                            message: "Passport number must be between 5 and 20 characters"
+                            max: 15,
+                            message: "Passport number must be between 5 and 15 characters"
                         },]}
                 >
                     <Input />
@@ -147,12 +144,23 @@ export const EditModal = ({ show, handleClose, student, refreshTable }) => {
                 <Form.Item
                     name={'phoneNumber'}
                     label="Phone Number"
+                    rules={[
+                        {
+                            min: 5,
+                            max: 15,
+                            message: "Phone number must be between 5 and 15 characters"
+                        },]}
                 >
                     <Input />
                 </Form.Item>
                 <Form.Item
                     name={'address'}
                     label="Address"
+                    rules={[
+                        {
+                            max: 254,
+                            message: "Address must be at most 254 characters"
+                        },]}
                 >
                     <Input />
                 </Form.Item>

@@ -1,13 +1,16 @@
 import React, { useEffect,useState} from 'react';
 import axios from 'axios';
-import { Modal, Input, Form, Row, Col,Table,Card ,Space, Button ,message} from 'antd';
+import { Modal, Input, Form, Row, Col,Table,Card ,Space, Button ,message,Pagination} from 'antd';
 const { confirm } = Modal;
+const { TextArea } = Input;
 
 
 export const CreateModal = ({ show, handleClose, refreshTable }) =>{
 
     const [studentRegisted, setStudentRegisted] = useState([]);
     const [studentUnregisted, setStudentUnregisted] = useState([]);
+    const [totalElements,setTotalElements] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [form] = Form.useForm();
     const layout = {
         labelCol: {
@@ -19,27 +22,41 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
     };
     const studentRegistedColums = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber'},
+        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber',width: '25%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
+            title: 'Action',dataIndex: '',key: 'x',align:"center",width: '30%',
             render: (student) => <Button type="danger" onClick={() => removeStudent(student)}>Remove</Button>
         }
     ];
     const studentUnregistedColums = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber'},
+        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber',width: '25%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
-            render: (student) => <Button type="primary" onClick={() => registerStudent(student)}>Register</Button>
+            title: 'Action',dataIndex: '',key: 'x',align:"center",width: '30%',
+            render: (student) => {
+                let isInclude = false;
+                studentRegisted.forEach(e => {
+                    if(e.id === student.id){
+                        isInclude = true;
+                    }
+                })
+                if(isInclude===true){
+                    return <Button type="danger" onClick={() => removeStudent(student)} style={{width:"90px"}}>Unregister</Button>
+                }else{
+                    return <Button type="primary" onClick={() => registerStudent(student)}  style={{width:"90px"}}>Register</Button>         
+                }
+            }
         }
     ];
+
+    function currentPageChange(current, pageSize){
+        setCurrentPage(current)
+    }
     function registerStudent(student){
-        setStudentUnregisted(studentUnregisted.filter(element => element.id !== student.id ));
         setStudentRegisted([...[student], ...studentRegisted] );
     }
     function removeStudent(student){
         setStudentRegisted(studentRegisted.filter(element => element.id !== student.id ));
-        setStudentUnregisted([...[student], ...studentUnregisted] );
     }
     function showCreateConfirm(value){
         confirm({
@@ -52,7 +69,6 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                 createCourse(value);
             },
             onCancel() {
-                console.log('Cancel');
             },
         });
     };
@@ -81,12 +97,19 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
         if(!show) {
             form.setFieldsValue({
                 nameCreate: null,
-                descriptionCreate: null
+                descriptionCreate: null,
             });
+            setStudentRegisted([])
         }else{
-            axios.get("/api/students")
-                .then(function(response){
-                    let studentList = response.data.map(row => ({
+            axios.get("/api/studentsPage",{
+                params:{
+                    pageNo:currentPage - 1,
+                    pageSize:4
+                }
+            }).then(function(response){
+                    setTotalElements(response.data.totalElements);
+                    setCurrentPage(response.data.number);
+                    let studentList = response.data.studentDtoList.map(row => ({
                         key: row.id,
                         id: row.id,
                         name: row.name,
@@ -97,13 +120,14 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                     console.log('err',error);
                 });
         }
-    }, [show])
+    // eslint-disable-next-line
+    }, [show,currentPage])
                     
 
     return (
         <Modal
             visible={show}
-            title="Edit course"
+            title="Create new course"
             okText= 'Create'
             onOk={form.submit}
             onCancel={handleClose}
@@ -111,6 +135,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
             forceRender={true}
 
         >
+            <div style={{minHeight:"600px"}}>
             <Form {...layout} form={form} onFinish={showCreateConfirm}>
                 <Row gutter={14}>
                     <Col className="gutter-row" span={11}>
@@ -138,7 +163,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                             name={'descriptionCreate'}
                             label="Description"
                         >
-                            <Input />
+                            <TextArea rows={3} />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -150,6 +175,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                                 columns={studentRegistedColums} 
                                 pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
                                 scroll={{ y: 260 }}
+                                size="small"
                             />
                         </Card>
                     </Space>
@@ -157,16 +183,27 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                 <Col span={12}>
                 <Space direction="vertical">
                         <Card title="Unregistered Student" style={{ width: 450 }}>
-                        <Table dataSource={studentUnregisted} 
-                        columns={studentUnregistedColums} 
-                        pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
-                        scroll={{ y: 260 }}
-                    />
+                        <Table 
+                            dataSource={studentUnregisted} 
+                            columns={studentUnregistedColums} 
+                            pagination={{ hideOnSinglePage: true }}
+                            scroll={{ y: 260 }}
+                            size="small"
+                        />
+                        <Pagination
+                            style={{marginTop:"16px",marginBottom:"16px",textAlign:"center"}}
+                            current={currentPage}
+                            pageSize= {4}
+                            total={totalElements}
+                            onChange={currentPageChange}
+                            size="small"
+                        />
                     </Card>
                 </Space>
                 </Col>
             </Row>
             </Form>
+            </div>
         </Modal>
     )
 }

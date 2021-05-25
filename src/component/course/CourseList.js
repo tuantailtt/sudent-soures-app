@@ -1,9 +1,9 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select, message } from 'antd';
+import { Button, Table, Modal, Input, Row, Col, Select, message ,Pagination} from 'antd';
+import { FolderAddOutlined} from '@ant-design/icons';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
-// import { Basic } from './create-modal-formik';
 
 
 const { confirm } = Modal;
@@ -13,25 +13,21 @@ function CourseList(){
 
     const [data, setData] = useState([]);
     const [dataSource, setDataSource] = useState([]);
-    const [valueSearch, setValueSearch] = useState('');
-    const [attributeSearch, setAttributeSearch] = useState(['name']);
+    const [columnSearch, setColumnSearch] = useState(["name"]);
     const [selectedCourse, setSelectedCourse] = useState({});
     const [isCreateModalShown, setIsCreateModalShown] = useState(false);
     const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
-    // const [isCreateFormikModalShown, setIsCreateFormikModalShown] = useState(false);
-    // const handleCreateFormikModalClose = () => {
-    //     setIsCreateFormikModalShown(false);
-    // };
-    // const showCreateFormikModal = () => {
-    //     setIsCreateFormikModalShown(true);
-    // }
-
+    const [valueSearch, setValueSearch] = useState('');
+    const [totalElements,setTotalElements] = useState(0);
+    const [pageSize, setPageSize] = useState(8);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [sort, setSort] = useState(["id,descend"])
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Description', dataIndex: 'description',key: 'description'},
+        { title: 'Name', dataIndex: 'name',key: 'name',sorter: {multiple: 1,}, width: '30%'},
+        { title: 'Description', dataIndex: 'description',key: 'description',sorter: {multiple: 1,}, width: '50%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
+            title: 'Action',dataIndex: '',key: 'x',align:"center", width: '20%',
             render: (course) => (
                 <div>
                     <Button type="primary" onClick={() => showEditModal(course)} style={{margin:"0px 2px 0px 2px"}}>Edit</Button>
@@ -39,8 +35,6 @@ function CourseList(){
                 </div>)
         }
     ];
-
-    
     
     const handleCreateModalClose = () => {
         setIsCreateModalShown(false);
@@ -54,12 +48,8 @@ function CourseList(){
     };
     const showEditModal = (course) => {
         setSelectedCourse(course)
-        console.log('course',course)
         setIsEditModalShown(true);
     }
-
-
-    
 
     function deleteCourse(id){
         axios.delete('/api/courses/'+id)
@@ -80,62 +70,80 @@ function CourseList(){
             okType: 'danger',
             cancelText: 'No',
             onOk() {
-                console.log(course.id);
                 deleteCourse(course.id);
             },
             onCancel() {
-            console.log('Cancel');
             },
         });
     }
 
     function handleChangeValueSearch(e){
-        console.log('param',attributeSearch);
-        const currValue = e.target.value;
-        if(currValue !== ""){
-            setValueSearch(currValue);
-            filterDataSource(currValue,attributeSearch);
-        }else{
-            setValueSearch(currValue);
-            setDataSource(data);
+        if (e.key === 'Enter') {
+            setCurrentPage(1);
+            setRefresh(!refresh);
+          }
+    }
+    function handleChangeAndSetValueSearch(e){
+        setValueSearch(e.target.value);
+        if(e.target.value === ""){
+            setCurrentPage(1);
+            setRefresh(!refresh);
         }
-        
     }
 
-    function filterDataSource(value,params){
-        const filteredData = data.filter((entry) =>{
-            let isNotNull = false ;
-            params.forEach(param => {
-                if(entry[param] != null){
-                    if(entry[param].toString().toLowerCase().includes(value.toLowerCase())){isNotNull = true;};
-                }
-            });
-            return isNotNull === true;
-        });
-        setDataSource(filteredData);
-    }
+   
 
     function handleChangeSelectedAttributeSearch(params) {
-        if(params[0]==null){
-            setValueSearch('');
-            setAttributeSearch([]);
-            setDataSource(data);
-        }else{
-            setAttributeSearch(params);
-            console.log('value',params);
-            filterDataSource(valueSearch,params);
-        }
+        setColumnSearch(params);
+        setRefresh(!refresh);
     }
 
     function refreshTable(){
+        setCurrentPage(1);
+        setRefresh(!refresh);
+    }
+    function pageSizeChange(current, pageSize) {
+        setPageSize(pageSize);
+        setRefresh(!refresh);
+    }
+    function currentPageChange(current, pageSize){
+        setCurrentPage(current)
+        setRefresh(!refresh);
+    }
+
+    function onChange(pagination, filters, sorter, extra) {
+        let sortArr =[];
+        if( Array.isArray(sorter)){
+            sortArr = sorter.map(e => e.field+","+e.order)
+            setSort(sortArr);
+        }else if(sorter.order === undefined){
+            setSort(["id,descend"]);
+        }else{
+            sortArr =[sorter.field+","+sorter.order]
+                setSort(sortArr);
+        }
         setRefresh(!refresh);
     }
 
     useEffect(() => {
-        axios.get('/api/courses')
-            .then(function (response) {
-                console.log(response.data)
-                let list = response.data.map(row => ({
+        let params = new URLSearchParams();
+        params.append("pageNo",currentPage-1);
+        params.append("pageSize",pageSize);
+        params.append("searchValue",valueSearch);
+        sort.forEach(e => {
+            params.append("sort",e);
+        });
+        columnSearch.forEach(e => {
+            params.append("columnSearch",e);
+        })
+        let request = {
+            params: params
+        };
+        axios.get('/api/coursesPage',request).then(function (response) {
+                setTotalElements(response.data.totalElements);
+                setPageSize(response.data.size);
+                setCurrentPage(response.data.number);
+                let list = response.data.courseDtoList.map(row => ({
                     key: row.id,
                     id: row.id,
                     name: row.name,
@@ -145,6 +153,7 @@ function CourseList(){
                 setData(list);
                 setDataSource(list);
             })
+    // eslint-disable-next-line
     }, [refresh]);
 
     return (
@@ -152,40 +161,55 @@ function CourseList(){
             <div>
                 <CreateModal show={isCreateModalShown} handleClose={handleCreateModalClose} refreshTable={refreshTable}/>
              <EditModal show={isEditModalShown} handleClose={handleEditModalClose} course={selectedCourse} refreshTable={refreshTable}/>
-                {/* <Basic show={isCreateFormikModalShown} handleClose={handleCreateFormikModalClose} refreshTable={refreshTable}/> */}
                 <Row gutter={16}>
-                    <Col className="gutter-row" span={6}>
+                    <Col className="gutter-row" span={4}></Col>
+                    <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search keywords:</Col>
+                    <Col className="gutter-row" span={4}>
                         <Input
                             placeholder="Enter search keywords"
-                            value={valueSearch}
-                            onChange={(e)=>handleChangeValueSearch(e)}
+                           onKeyDown={(e)=>handleChangeValueSearch(e)}
+                           onChange={handleChangeAndSetValueSearch}
                         />
                     </Col>
+                    <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search attribute: </Col>
                     <Col className="gutter-row" span={6}>
                     <Select
                         mode="multiple"
                         allowClear
                         style={{ width: '100%' }}
                         placeholder="Please select the desired attribute"
-                        defaultValue={['name']}
+                        defaultValue={columnSearch}
                         onChange={handleChangeSelectedAttributeSearch}
                     >
                         <Option value="name">Name</Option>
                         <Option value="description">Description</Option>
                     </Select>
                     </Col>
-                    <Col className="gutter-row" span={4}>
-                    </Col>
-                    <Col className="gutter-row" span={8}>
-                        <Button onClick={showCreateModal} type="primary">Create</Button>
-                        {/* <Button onClick={showCreateFormikModal}>Createformik</Button> */}
+                    <Col className="gutter-row" span={6}>
+                        <Button onClick={showCreateModal} type="primary"><FolderAddOutlined />Create</Button>
                     </Col>
                 </Row>
             </div>
+            <br></br>
            <div>
-                <Table dataSource={dataSource} 
-                columns={columns} 
-                pagination={{ position: ["bottomCenter"], pageSize: 8}}
+                <Table 
+                    dataSource={dataSource} 
+                    columns={columns} 
+                    size="small"
+                    pagination={{ 
+                        hideOnSinglePage: true
+                    }}
+                    onChange={onChange}
+                />
+                <br />
+                <Pagination
+                    showSizeChanger
+                    pageSizeOptions= {[6,8,10]}
+                    onShowSizeChange={pageSizeChange}
+                    current={currentPage}
+                    pageSize= {pageSize}
+                    total={totalElements}
+                    onChange={currentPageChange}
                 />
             </div>
         </div>

@@ -1,13 +1,16 @@
 import React, { useEffect, useState} from 'react';
 import axios from 'axios';
-import { Modal, Input, Form,Row, Col,Table,Card ,Space, Button, message} from 'antd';
+import { Modal, Input, Form,Row, Col,Table,Card ,Space, Button, message,Pagination} from 'antd';
 const { confirm } = Modal;
+const { TextArea } = Input;
 
 
 export const EditModal = ({ show, handleClose, course, refreshTable }) => {
 
     const [studentRegisted, setStudentRegisted] = useState([]);
     const [studentUnregisted, setStudentUnregisted] = useState([]);
+    const [totalElements,setTotalElements] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const [form] = Form.useForm();
 
     const layout = {
@@ -20,30 +23,43 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
     };
     const studentRegistedColums = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber'},
+        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber',width: '25%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
+            title: 'Action',dataIndex: '',key: 'x',align:"center",width: '30%',
             render: (student) => <Button type="danger" onClick={() => removeStudent(student)}>Remove</Button>
         }
     ];
     const studentUnregistedColums = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
-        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber'},
+        { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber',width: '25%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
-            render: (student) => <Button type="primary" onClick={() => registerStudent(student)}>Register</Button>
+            title: 'Action',dataIndex: '',key: 'x',align:"center",width: '30%',
+            render: (student) => {
+                let isInclude = false;
+                studentRegisted.forEach(e => {
+                    if(e.id === student.id){
+                        isInclude = true;
+                    }
+                })
+                if(isInclude===true){
+                    return <Button type="danger" onClick={() => removeStudent(student)} style={{width:"90px"}}>Unregister</Button>
+                }else{
+                    return <Button type="primary" onClick={() => registerStudent(student)}  style={{width:"90px"}}>Register</Button>         
+                }
+            }
         }
     ];
     
     function registerStudent(student){
-        setStudentUnregisted(studentUnregisted.filter(element => element.id !== student.id ));
         setStudentRegisted([...[student], ...studentRegisted] );
     }
     function removeStudent(student){
         setStudentRegisted(studentRegisted.filter(element => element.id !== student.id ));
-        setStudentUnregisted([...[student], ...studentUnregisted] );
     }
 
+    function currentPageChange(current, pageSize){
+        setCurrentPage(current)
+    }
     function showSaveConfirm(value){
         confirm({
             title: 'Are you sure save this your changed ?',
@@ -80,9 +96,9 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 message.error('Update failed');
               })
     }
-    useEffect(() => {
-        if(Object.values(course).length !== 0){
-            console.log('c',course)
+
+    useEffect(()=>{
+        if(Object.values(course).length !== 0 && show===true){
             form.setFieldsValue({
                 name: course.name,
                 description: course.description
@@ -93,22 +109,29 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 name: row.name,
                 passportNumber: row.passportNumber
             })));
-            axios.get("/api/students")
+        }
+        setCurrentPage(1);
+    // eslint-disable-next-line
+    },[course,show])
+
+    useEffect(() => {
+        if(Object.values(course).length !== 0 && show===true){
+            axios.get("/api/studentsPage",{
+                params:{
+                    pageNo:currentPage - 1,
+                    pageSize:4
+                }
+            })
                 .then(function(response){
-                    let studentList = response.data.map(row => ({
+                    setTotalElements(response.data.totalElements);
+                    setCurrentPage(response.data.number);
+                    let studentList = response.data.studentDtoList.map(row => ({
                         key: row.id,
                         id: row.id,
                         name: row.name,
                         passportNumber: row.passportNumber
                     }));
-                    let studentUnregistedList = studentList.filter((std) =>{
-                        let isIncluse = false;
-                            course.students.forEach(element => {
-                        if(element.id === std.id) isIncluse=true
-                    });
-                    return isIncluse===false;
-                    })
-                    setStudentUnregisted(studentUnregistedList);
+                    setStudentUnregisted(studentList);
                 }).catch(function(error){
                     console.log('err',error);
                 });
@@ -118,8 +141,8 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 description:  null
             });
         }
-       
-    },[course]);
+    // eslint-disable-next-line
+    },[course,show,currentPage]);
     
     return (
         
@@ -133,6 +156,7 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
             forceRender={true}
 
         >
+            <div style={{height:"560px"}}>
             <Form 
                 {...layout} 
                 form={form} 
@@ -156,8 +180,13 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                         <Form.Item
                             name={'description'}
                             label="Description"
+                            rules={[
+                                {
+                                    max:254,
+                                    message:"Description should have at most 254 characters"
+                                },]}
                         >
-                            <Input />
+                            <TextArea rows={3} />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -169,6 +198,7 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                                 columns={studentRegistedColums} 
                                 pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
                                 scroll={{ y: 260 }}
+                                size="small"
                             />
                         </Card>
                     </Space>
@@ -176,18 +206,28 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 <Col span={12}>
                 <Space direction="vertical">
                         <Card title="Unregistered Student" style={{ width: 450 }}>
-                        <Table dataSource={studentUnregisted} 
-                        columns={studentUnregistedColums} 
-                        pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
-                        scroll={{ y: 260 }}
-                    />
+                        <Table 
+                            dataSource={studentUnregisted} 
+                            columns={studentUnregistedColums} 
+                            pagination={{ hideOnSinglePage: true }}
+                            scroll={{ y: 260 }}
+                            size="small"
+                        />
+                        <Pagination
+                            style={{marginTop:"16px",marginBottom:"16px",textAlign:"center"}}
+                            current={currentPage}
+                            pageSize= {4}
+                            total={totalElements}
+                            onChange={currentPageChange}
+                            size="small"
+                        />
                         </Card>
                     </Space>
                 </Col>
             </Row>
                 
             </Form>
-
+            </div>
         </Modal>
     )
 

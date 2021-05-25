@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select, message} from 'antd';
+import { Button, Table, Modal, Input, Row, Col, Select, message,Pagination} from 'antd';
+import { UserAddOutlined} from '@ant-design/icons';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
 import { RegisterModal } from './register-modal';
@@ -12,23 +13,27 @@ function StudentList() {
 
     const [data, setData] = useState([]);
     const [dataSource, setDataSource] = useState([]);
-    const [valueSearch, setValueSearch] = useState('');
-    const [attributeSearch, setAttributeSearch] = useState(['name']);
+    const [columnSearch, setColumnSearch] = useState(["name"]);
     const [selectedStudent, setSelectedStudent] = useState({});
     const [isCreateModalShown, setIsCreateModalShown] = useState(false);
     const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [isRegisterModalShown, setIsRegisterModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
+    const [valueSearch, setValueSearch] = useState('');
+    const [totalElements,setTotalElements] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [sort, setSort] = useState(['id,descend'])
 
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name',sorter: (a, b) => a.name.length - b.name.length}, 
-        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: (a, b) => a.yearOld - b.yearOld},
-        { title: 'Sex', dataIndex: 'sex', key: 'sex',sorter: (a, b) => a.sex.length - b.sex.length},
-        { title: 'Address', dataIndex: 'address',key: 'address'},
-        { title: 'Passport number', dataIndex: 'passportNumber',key: 'passportNumber'},
-        { title: 'Phone number',dataIndex: 'phoneNumber',key: 'phoneNumber'},
+        { title: 'Name', dataIndex: 'name',key: 'name', sorter: {multiple: 1,},width: '15%', }, 
+        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: { multiple: 2,}, width: '5%', align:"center" },
+        { title: 'Sex', dataIndex: 'sex', key: 'sex',sorter: { multiple: 3,}, width: '5%', align:"center"},
+        { title: 'Address', dataIndex: 'address',key: 'address',sorter: { multiple: 4,}},
+        { title: 'Passport number', dataIndex: 'passportNumber',key: 'passportNumber',sorter: { multiple: 5,}, width: '10%'},
+        { title: 'Phone number',dataIndex: 'phoneNumber',key: 'phoneNumber',sorter: { multiple: 6,}, width: '10%'},
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center",
+            title: 'Action',dataIndex: '',key: 'x',align:"center", width: '20%',
             render: (student) => (
                 <div>
                     <Button type="primary" onClick={() => showEditModal(student)}  style={{margin:"0px 2px 0px 2px"}}>Edit</Button>
@@ -79,61 +84,84 @@ function StudentList() {
             okType: 'danger',
             cancelText: 'No',
             onOk() {
-                console.log(student.id);
                 deleteStudent(student.id);
             },
             onCancel() {
-            console.log('Cancel');
             },
         });
     }
 
     
     function handleChangeSelectedAttributeSearch(params) {
-        if(params[0]==null){
-            setValueSearch('');
-            setAttributeSearch([]);
-            setDataSource(data);
-        }else{
-            setAttributeSearch(params);
-            console.log('value',params);
-            filterDataSource(valueSearch,params);
-        }
+        setColumnSearch(params);
+        setRefresh(!refresh);
     }
 
     function handleChangeValueSearch(e){
-        console.log('param',attributeSearch);
-        const currValue = e.target.value;
-        if(currValue !== ""){
-            setValueSearch(currValue);
-            filterDataSource(currValue,attributeSearch);
-        }else{
-            setDataSource(data);
+        if (e.key === 'Enter') {
+            setCurrentPage(1);
+            setRefresh(!refresh);
         }
         
+        
+    }
+    function handleChangeAndSetValueSearch(e){
+        setValueSearch(e.target.value);
+        if(e.target.value === ""){
+            setCurrentPage(1);
+            setRefresh(!refresh);
+        }
+    }
+    function pageSizeChange(current, pageSize) {
+        setPageSize(pageSize);
+        setRefresh(!refresh);
+    }
+    function currentPageChange(current, pageSize){
+        setCurrentPage(current)
+        setRefresh(!refresh);
     }
 
-    function filterDataSource(value,params){
-        const filteredData = data.filter((entry) =>{
-            let isNotNull = false ;
-            params.forEach(param => {
-                if(entry[param] != null){
-                    if(entry[param].toString().toLowerCase().includes(value.toLowerCase())){isNotNull = true;};
-                }
-            });
-            return isNotNull === true;
-        });
-        setDataSource(filteredData);
-    }
+
 
     function refreshTable(){
+        setCurrentPage(1);
+        setRefresh(!refresh);
+    }
+
+    function onChange(pagination, filters, sorter, extra) {
+        let sortArr =[];
+        if( Array.isArray(sorter)){
+            sortArr = sorter.map(e => e.field+","+e.order)
+            setSort(sortArr);
+        }else if(sorter.order === undefined){
+            setSort(["id,descend"]);
+        }else{
+            sortArr =[sorter.field+","+sorter.order]
+                setSort(sortArr);
+        }
         setRefresh(!refresh);
     }
     
     useEffect(() => {
-        axios.get('/api/students')
+        let params = new URLSearchParams();
+        params.append("pageNo",currentPage-1);
+        params.append("pageSize",pageSize);
+        params.append("searchValue",valueSearch);
+        sort.forEach(e =>{
+            params.append("sort",e);
+        })
+        columnSearch.forEach(e => {
+            params.append("columnSearch",e);
+        })
+        let request = {
+            params: params
+        };
+        axios.get('/api/studentsPage', request)
             .then(function (response) {
-                let list = response.data.map(row => ({
+                setTotalElements(response.data.totalElements);
+                setPageSize(response.data.size);
+                setCurrentPage(response.data.number);
+                let list = response.data.studentDtoList.map(row => ({
                     key: row.id,
                     id: row.id,
                     name: row.name,
@@ -144,12 +172,11 @@ function StudentList() {
                     address: row.address,
                     courses: row.courses
                 }));
-                console.log('list',list)
                 setData(list);
                 setDataSource(list);
             })
+        // eslint-disable-next-line
         }, [refresh]);
-        
     
   return (
         <div className="App">
@@ -158,20 +185,25 @@ function StudentList() {
             <EditModal show={isEditModalShown} handleClose={handleEditModalClose} student={selectedStudent} refreshTable={refreshTable}/>
             <RegisterModal show={isRegisterModalShown} handleClose={handleRegisterModalClose} student={selectedStudent} refreshTable={refreshTable}/>
             <Row gutter={16}>
-                <Col className="gutter-row" span={6}>
+                <Col className="gutter-row" span={4}></Col>
+                <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search keywords:</Col>
+                <Col className="gutter-row" span={4}>
                     <Input
                         placeholder="Enter search keywords"
-                        value={valueSearch}
-                        onChange={(e)=>handleChangeValueSearch(e)}
+                        onKeyDown={(e)=>handleChangeValueSearch(e)}
+                        onChange={handleChangeAndSetValueSearch}
                     />
+                </Col>
+                <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>
+                    Search attribute:  
                 </Col>
                 <Col className="gutter-row" span={6}>
                 <Select
                     mode="multiple"
                     allowClear
                     style={{ width: '100%' }}
-                    placeholder="Please select the desired attribute"
-                    defaultValue={['name']}
+                    placeholder="Please select search attribute"
+                    defaultValue={columnSearch}
                     onChange={handleChangeSelectedAttributeSearch}
                 >
                    <Option value="name">Name</Option>
@@ -182,17 +214,30 @@ function StudentList() {
                    <Option value="phoneNumber">Phone Number</Option>
                 </Select>
                 </Col>
-                <Col className="gutter-row" span={5}>
-                   
-                </Col>
-                <Col className="gutter-row" span={7}>
-                    <Button type="primary" onClick={showCreateModal}>Create</Button>
+                
+                <Col className="gutter-row" span={6}>
+                    <Button type="primary" onClick={showCreateModal}><UserAddOutlined />Create</Button>
                 </Col>
             </Row>
+            <br></br>
             <Table dataSource={dataSource} 
                 columns={columns} 
-                pagination={{ position: ["bottomCenter"] ,pageSize: 8 }}
+                pagination={{ 
+                    hideOnSinglePage: true
+                }}
+                size="small"
+                onChange={onChange}
             />
+            <br></br>
+            <Pagination
+                    showSizeChanger
+                    pageSizeOptions= {[8, 10, 12]}
+                    onShowSizeChange={pageSizeChange}
+                    current={currentPage}
+                    pageSize= {pageSize}
+                    total={totalElements}
+                    onChange={currentPageChange}
+                />
         </div>
     </div>
   );

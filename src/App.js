@@ -8,18 +8,15 @@ import {
 } from "react-router-dom";
 import {Layout, Menu, Breadcrumb, Card} from 'antd';
 import { 
-  DesktopOutlined,
-  FileOutlined,
-  TeamOutlined,
-  UserOutlined,
+  ContainerOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import React, {useState} from 'react';
 import StudentList from './component/student/StudentList';
 import CourseList from './component/course/CourseList';
+import Welcome from './Welcome';
+import logo from './image/logo192.png';
 const { Header, Content, Footer, Sider } = Layout;
-const { SubMenu } = Menu;
-
-
 
 function App() {
 
@@ -36,28 +33,16 @@ function App() {
     <Router>
       <Layout style={{ minHeight: '100vh' }}>
         <Sider collapsible collapsed={collapsed} onCollapse={onCollapse}>
-          <div className="logo" />
-          <br></br>
-          <br></br>
-          <br></br>
-          <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline">
-            <Menu.Item key="1" icon={<UserOutlined />}>
+          <div  className="logo"><img src={logo} alt="logo"/>Demo Application</div>
+          <Menu theme="dark" defaultSelectedKeys={[]} mode="inline">
+          <Menu.Item key="1">
+              <Link to="/admin/welcome">Welcome</Link>
+            </Menu.Item>
+            <Menu.Item key="2" icon={<UserOutlined />}>
               <Link to="/admin/students">Students</Link>
             </Menu.Item>
-            <Menu.Item key="2" icon={<DesktopOutlined />}>
+            <Menu.Item key="3" icon={<ContainerOutlined />}>
               <Link to="/admin/courses">Courses</Link>
-            </Menu.Item>
-            <SubMenu key="sub1" icon={<UserOutlined />} title="">
-              <Menu.Item key="3">Tom</Menu.Item>
-              <Menu.Item key="4">Bill</Menu.Item>
-              <Menu.Item key="5">Alex</Menu.Item>
-            </SubMenu>
-            <SubMenu key="sub2" icon={<TeamOutlined />} title="">
-              <Menu.Item key="6">Team 1</Menu.Item>
-              <Menu.Item key="8">Team 2</Menu.Item>
-            </SubMenu>
-            <Menu.Item key="9" icon={<FileOutlined />}>
-              
             </Menu.Item>
           </Menu>
         </Sider>
@@ -65,6 +50,15 @@ function App() {
           <Header className="site-layout-background" style={{ padding: 0 }} />
           <Content style={{ margin: '0 16px' }}>
             <Switch>
+            <Route path="/admin/welcome">
+                <Breadcrumb style={{ margin: '16px 0' }}>
+                  <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                  <Breadcrumb.Item>Welcome</Breadcrumb.Item>
+                </Breadcrumb>
+                <Card  title="Welcome" style={{height:"780px"}}>
+                  <Welcome />
+                </Card>
+              </Route>
               <Route path="/admin/students">
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
@@ -93,3 +87,7 @@ function App() {
 }
 
 export default App;
+
+
+
+
