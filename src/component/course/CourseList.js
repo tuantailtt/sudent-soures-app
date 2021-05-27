@@ -1,31 +1,88 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select, message ,Pagination} from 'antd';
+import { Button, Table, Modal, Input, Row, Col, message ,Pagination, Space} from 'antd';
 import { FolderAddOutlined} from '@ant-design/icons';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
+import { SearchOutlined } from '@ant-design/icons';
+
 
 
 const { confirm } = Modal;
-const { Option } = Select;
 
 function CourseList(){
 
     const [data, setData] = useState([]);
     const [dataSource, setDataSource] = useState([]);
-    const [columnSearch, setColumnSearch] = useState(["name"]);
     const [selectedCourse, setSelectedCourse] = useState({});
     const [isCreateModalShown, setIsCreateModalShown] = useState(false);
     const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
-    const [valueSearch, setValueSearch] = useState('');
     const [totalElements,setTotalElements] = useState(0);
     const [pageSize, setPageSize] = useState(8);
     const [currentPage, setCurrentPage] = useState(1);
-    const [sort, setSort] = useState(["id,descend"])
+    const [sorting, setSorting] = useState(["id:descend"])
+    const [nameSearch,setNameSearch]=useState('');
+    const [descriptionSearch,setDescriptionSearch]=useState('');
+
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name',sorter: {multiple: 1,}, width: '30%'},
-        { title: 'Description', dataIndex: 'description',key: 'description',sorter: {multiple: 1,}, width: '50%'},
+        { title: 'Name', dataIndex: 'name',key: 'name',sorter: {multiple: 1,}, width: '30%',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleNameSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleNameSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleNameSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
+            
+        { title: 'Description', dataIndex: 'description',key: 'description',sorter: {multiple: 1,}, width: '50%',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleDescriptionSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleDescriptionSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleDescriptionSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
         {
             title: 'Action',dataIndex: '',key: 'x',align:"center", width: '20%',
             render: (course) => (
@@ -35,6 +92,27 @@ function CourseList(){
                 </div>)
         }
     ];
+
+    const handleNameSearch = (selectedKeys, confirm) => {
+        confirm();
+        setNameSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleNameSearchReset = clearFilters => {
+        clearFilters();
+        setNameSearch("");
+        setRefresh(!refresh)
+    };
+    const handleDescriptionSearch = (selectedKeys, confirm) => {
+        confirm();
+        setDescriptionSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleDescriptionSearchReset = clearFilters => {
+        clearFilters();
+        setDescriptionSearch("");
+        setRefresh(!refresh)
+    };
     
     const handleCreateModalClose = () => {
         setIsCreateModalShown(false);
@@ -77,27 +155,6 @@ function CourseList(){
         });
     }
 
-    function handleChangeValueSearch(e){
-        if (e.key === 'Enter') {
-            setCurrentPage(1);
-            setRefresh(!refresh);
-          }
-    }
-    function handleChangeAndSetValueSearch(e){
-        setValueSearch(e.target.value);
-        if(e.target.value === ""){
-            setCurrentPage(1);
-            setRefresh(!refresh);
-        }
-    }
-
-   
-
-    function handleChangeSelectedAttributeSearch(params) {
-        setColumnSearch(params);
-        setRefresh(!refresh);
-    }
-
     function refreshTable(){
         setCurrentPage(1);
         setRefresh(!refresh);
@@ -114,28 +171,27 @@ function CourseList(){
     function onChange(pagination, filters, sorter, extra) {
         let sortArr =[];
         if( Array.isArray(sorter)){
-            sortArr = sorter.map(e => e.field+","+e.order)
-            setSort(sortArr);
+            sortArr = sorter.map(e => e.field+":"+e.order)
+            setSorting(sortArr);
         }else if(sorter.order === undefined){
-            setSort(["id,descend"]);
+            setSorting(["id,descend"]);
         }else{
-            sortArr =[sorter.field+","+sorter.order]
-                setSort(sortArr);
+            sortArr =[sorter.field+":"+sorter.order]
+                setSorting(sortArr);
         }
         setRefresh(!refresh);
     }
 
     useEffect(() => {
         let params = new URLSearchParams();
+        params.append("searching","name:"+nameSearch);
+        params.append("searching","description:"+descriptionSearch);
         params.append("pageNo",currentPage-1);
         params.append("pageSize",pageSize);
-        params.append("searchValue",valueSearch);
-        sort.forEach(e => {
-            params.append("sort",e);
+        sorting.forEach(e => {
+            params.append("sorting",e);
         });
-        columnSearch.forEach(e => {
-            params.append("columnSearch",e);
-        })
+        
         let request = {
             params: params
         };
@@ -162,29 +218,8 @@ function CourseList(){
                 <CreateModal show={isCreateModalShown} handleClose={handleCreateModalClose} refreshTable={refreshTable}/>
              <EditModal show={isEditModalShown} handleClose={handleEditModalClose} course={selectedCourse} refreshTable={refreshTable}/>
                 <Row gutter={16}>
-                    <Col className="gutter-row" span={4}></Col>
-                    <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search keywords:</Col>
-                    <Col className="gutter-row" span={4}>
-                        <Input
-                            placeholder="Enter search keywords"
-                           onKeyDown={(e)=>handleChangeValueSearch(e)}
-                           onChange={handleChangeAndSetValueSearch}
-                        />
-                    </Col>
-                    <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search attribute: </Col>
-                    <Col className="gutter-row" span={6}>
-                    <Select
-                        mode="multiple"
-                        allowClear
-                        style={{ width: '100%' }}
-                        placeholder="Please select the desired attribute"
-                        defaultValue={columnSearch}
-                        onChange={handleChangeSelectedAttributeSearch}
-                    >
-                        <Option value="name">Name</Option>
-                        <Option value="description">Description</Option>
-                    </Select>
-                    </Col>
+                    <Col className="gutter-row" span={18}></Col>
+                    
                     <Col className="gutter-row" span={6}>
                         <Button onClick={showCreateModal} type="primary"><FolderAddOutlined />Create</Button>
                     </Col>

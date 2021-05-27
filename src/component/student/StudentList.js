@@ -1,37 +1,215 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Button, Table, Modal, Input, Row, Col, Select, message,Pagination} from 'antd';
-import { UserAddOutlined} from '@ant-design/icons';
+import { Button, Table, Modal, Input, Row, Col, Select, message,Pagination,Space} from 'antd';
+import { UserAddOutlined,SearchOutlined} from '@ant-design/icons';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
 import { RegisterModal } from './register-modal';
 
+
 const { confirm } = Modal;
 const { Option } = Select;
+
 
 function StudentList() {
 
     const [data, setData] = useState([]);
     const [dataSource, setDataSource] = useState([]);
-    const [columnSearch, setColumnSearch] = useState(["name"]);
     const [selectedStudent, setSelectedStudent] = useState({});
     const [isCreateModalShown, setIsCreateModalShown] = useState(false);
     const [isEditModalShown, setIsEditModalShown] = useState(false);
     const [isRegisterModalShown, setIsRegisterModalShown] = useState(false);
     const [refresh, setRefresh] = useState(false);
-    const [valueSearch, setValueSearch] = useState('');
     const [totalElements,setTotalElements] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [sort, setSort] = useState(['id,descend'])
+    const [sorting, setSorting] = useState(['id:descend'])
+    const [nameSearch,setNameSearch]=useState('');
+    const [ageSearch,setAgeSearch]=useState('');
+    const [sexSearch,setSexSearch]=useState('');
+    const [addressSearch,setAddressSearch]=useState('');
+    const [passportSearch,setPassportSearch]=useState('');
+    const [phoneSearch,setPhoneSearch]=useState('');
 
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name', sorter: {multiple: 1,},width: '15%', }, 
-        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: { multiple: 2,}, width: '5%', align:"center" },
-        { title: 'Sex', dataIndex: 'sex', key: 'sex',sorter: { multiple: 3,}, width: '5%', align:"center"},
-        { title: 'Address', dataIndex: 'address',key: 'address',sorter: { multiple: 4,}},
-        { title: 'Passport number', dataIndex: 'passportNumber',key: 'passportNumber',sorter: { multiple: 5,}, width: '10%'},
-        { title: 'Phone number',dataIndex: 'phoneNumber',key: 'phoneNumber',sorter: { multiple: 6,}, width: '10%'},
+        { title: 'Name', dataIndex: 'name',key: 'name', sorter: {multiple: 1,},width: '15%',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleNameSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleNameSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleNameSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        }, 
+        { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: { multiple: 2,}, width: '5%', align:"center" ,
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleAgeSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                    type="number"
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleAgeSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleAgeSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
+        { title: 'Sex', dataIndex: 'sex', key: 'sex',sorter: { multiple: 3,}, width: '5%', align:"center",
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                {/* <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleAgeSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                    type="number"
+                /> */}
+                <Select
+                    style={{ marginBottom: 8, display: 'block' }}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys( e !==""? [e]:[])}}
+                >
+                    <Option value=""></Option>
+                    <Option value="male">Male</Option>
+                    <Option value="female">Female</Option>
+                </Select>
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleSexSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleSexSearchReset(clearFilters)} size="small" style={{ width: 90 }} >
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+        },
+        { title: 'Address', dataIndex: 'address',key: 'address',sorter: { multiple: 4,},
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handleAddressSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handleAddressSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handleAddressSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
+        { title: 'Passport number', dataIndex: 'passportNumber',key: 'passportNumber',sorter: { multiple: 5,}, width: '10%',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handlePassportSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handlePassportSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handlePassportSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
+        { title: 'Phone number',dataIndex: 'phoneNumber',key: 'phoneNumber',sorter: { multiple: 6,}, width: '10%',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search name`}
+                    value={selectedKeys[0]}
+                    onChange={e => {setSelectedKeys(e.target.value ? [e.target.value] : [])}}
+                    onPressEnter={() => handlePhoneSearch(selectedKeys,confirm)}
+                    style={{ marginBottom: 8, display: 'block' }}
+                />
+                <Space>
+                    <Button
+                    type="primary"
+                    onClick={() => handlePhoneSearch(selectedKeys, confirm)}
+                    icon={<SearchOutlined />}
+                    size="small"
+                    style={{ width: 90 }}
+                    >
+                    Search
+                    </Button>
+                    <Button onClick={() => handlePhoneSearchReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    Reset
+                    </Button>
+                </Space>
+                </div>
+            ),
+            filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+        },
         {
             title: 'Action',dataIndex: '',key: 'x',align:"center", width: '20%',
             render: (student) => (
@@ -42,6 +220,67 @@ function StudentList() {
                 </div>)
         }
     ];
+    
+    const handleNameSearch = (selectedKeys, confirm) => {
+        confirm();
+        setNameSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleNameSearchReset = clearFilters => {
+        clearFilters();
+        setNameSearch("");
+        setRefresh(!refresh)
+    };
+    const handleAddressSearch = (selectedKeys, confirm) => {
+        confirm();
+        setAddressSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleAddressSearchReset = clearFilters => {
+        clearFilters();
+        setAddressSearch("");
+        setRefresh(!refresh)
+    };
+    const handlePassportSearch = (selectedKeys, confirm) => {
+        confirm();
+        setPassportSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handlePassportSearchReset = clearFilters => {
+        clearFilters();
+        setPassportSearch("");
+        setRefresh(!refresh)
+    };
+    const handlePhoneSearch = (selectedKeys, confirm) => {
+        confirm();
+        setPhoneSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handlePhoneSearchReset = clearFilters => {
+        clearFilters();
+        setPhoneSearch("");
+        setRefresh(!refresh)
+    };
+    const handleAgeSearch = (selectedKeys, confirm) => {
+        confirm();
+        setAgeSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleAgeSearchReset = clearFilters => {
+        clearFilters();
+        setAgeSearch("");
+        setRefresh(!refresh)
+    };
+    const handleSexSearch = (selectedKeys, confirm) => {
+        confirm();
+        setSexSearch(selectedKeys[0] === undefined?"":selectedKeys[0]);
+        setRefresh(!refresh)
+    };
+    const handleSexSearchReset = clearFilters => {
+        clearFilters();
+        setSexSearch("");
+        setRefresh(!refresh)
+    };
 
     const handleCreateModalClose = () => {
         setIsCreateModalShown(false);
@@ -92,26 +331,7 @@ function StudentList() {
     }
 
     
-    function handleChangeSelectedAttributeSearch(params) {
-        setColumnSearch(params);
-        setRefresh(!refresh);
-    }
-
-    function handleChangeValueSearch(e){
-        if (e.key === 'Enter') {
-            setCurrentPage(1);
-            setRefresh(!refresh);
-        }
-        
-        
-    }
-    function handleChangeAndSetValueSearch(e){
-        setValueSearch(e.target.value);
-        if(e.target.value === ""){
-            setCurrentPage(1);
-            setRefresh(!refresh);
-        }
-    }
+   
     function pageSizeChange(current, pageSize) {
         setPageSize(pageSize);
         setRefresh(!refresh);
@@ -131,27 +351,29 @@ function StudentList() {
     function onChange(pagination, filters, sorter, extra) {
         let sortArr =[];
         if( Array.isArray(sorter)){
-            sortArr = sorter.map(e => e.field+","+e.order)
-            setSort(sortArr);
+            sortArr = sorter.map(e => e.field+":"+e.order)
+            setSorting(sortArr);
         }else if(sorter.order === undefined){
-            setSort(["id,descend"]);
+            setSorting(["id:descend"]);
         }else{
-            sortArr =[sorter.field+","+sorter.order]
-                setSort(sortArr);
+            sortArr =[sorter.field+":"+sorter.order]
+                setSorting(sortArr);
         }
         setRefresh(!refresh);
     }
     
     useEffect(() => {
         let params = new URLSearchParams();
+        params.append("searching","name:"+nameSearch);
+        params.append("searching","address:"+addressSearch);
+        params.append("searching","passportNumber:"+passportSearch);
+        params.append("searching","phoneNumber:"+phoneSearch);
+        params.append("searching","yearOld:"+ageSearch);
+        params.append("searching","sex:"+sexSearch);
         params.append("pageNo",currentPage-1);
         params.append("pageSize",pageSize);
-        params.append("searchValue",valueSearch);
-        sort.forEach(e =>{
-            params.append("sort",e);
-        })
-        columnSearch.forEach(e => {
-            params.append("columnSearch",e);
+        sorting.forEach(e =>{
+            params.append("sorting",e);
         })
         let request = {
             params: params
@@ -185,36 +407,8 @@ function StudentList() {
             <EditModal show={isEditModalShown} handleClose={handleEditModalClose} student={selectedStudent} refreshTable={refreshTable}/>
             <RegisterModal show={isRegisterModalShown} handleClose={handleRegisterModalClose} student={selectedStudent} refreshTable={refreshTable}/>
             <Row gutter={16}>
-                <Col className="gutter-row" span={4}></Col>
-                <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>Search keywords:</Col>
-                <Col className="gutter-row" span={4}>
-                    <Input
-                        placeholder="Enter search keywords"
-                        onKeyDown={(e)=>handleChangeValueSearch(e)}
-                        onChange={handleChangeAndSetValueSearch}
-                    />
-                </Col>
-                <Col className="gutter-row" span={2} style={{marginTop: "4px"}}>
-                    Search attribute:  
-                </Col>
-                <Col className="gutter-row" span={6}>
-                <Select
-                    mode="multiple"
-                    allowClear
-                    style={{ width: '100%' }}
-                    placeholder="Please select search attribute"
-                    defaultValue={columnSearch}
-                    onChange={handleChangeSelectedAttributeSearch}
-                >
-                   <Option value="name">Name</Option>
-                   <Option value="yearOld">Age</Option>
-                   <Option value="sex">Sex</Option>
-                   <Option value="address">Address</Option>
-                   <Option value="passportNumber">Passport Number</Option>
-                   <Option value="phoneNumber">Phone Number</Option>
-                </Select>
-                </Col>
-                
+                <Col className="gutter-row" span={18}></Col>
+               
                 <Col className="gutter-row" span={6}>
                     <Button type="primary" onClick={showCreateModal}><UserAddOutlined />Create</Button>
                 </Col>
