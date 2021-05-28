@@ -1,8 +1,9 @@
 import React, { useEffect, useState} from 'react';
 import axios from 'axios';
-import { Modal, Input, Form,Row, Col,Table,Card ,Space, Button, message,Pagination} from 'antd';
+import { Modal, Row, Col,Table,Card ,Space, Button, message,Pagination} from 'antd';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 const { confirm } = Modal;
-const { TextArea } = Input;
 
 
 export const EditModal = ({ show, handleClose, course, refreshTable }) => {
@@ -11,16 +12,18 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
     const [studentUnregisted, setStudentUnregisted] = useState([]);
     const [totalElements,setTotalElements] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [form] = Form.useForm();
 
-    const layout = {
-        labelCol: {
-          span: 5,
-        },
-        wrapperCol: {
-          span: 17,
-        },
+    var initFormValue = Object.values(course).length !== 0 ? 
+    { 
+        name: course.name !== null ? course.name:"",
+        description: course.description !== null ? course.description:"", 
+       
+    }:{ 
+        name: "", 
+        yearOld: "", 
+       
     };
+
     const studentRegistedColums = [
         { title: 'Name', dataIndex: 'name',key: 'name'},
         { title: 'Passport Number', dataIndex: 'passportNumber',key: 'passportNumber',width: '25%'},
@@ -71,23 +74,20 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                 updateCourse(value);
             },
             onCancel() {
-                console.log('Cancel');
             },
         });
     };
 
     function updateCourse(value){
         let courseDto = {
-            "name": value.name === undefined ? null : value.name,
-            "description": value.description === undefined ? null : value.description,
+            "name": value.name === "" ? null : value.name,
+            "description": value.description === "" ? null : value.description,
             "students": studentRegisted.map(student => {
                 return {"id":student.id}
             })
         };
-        console.log(courseDto);
         axios.put("/api/courses/"+course.id,courseDto)
             .then(function(response){
-                console.log(response);
                 handleClose();
                 message.success('Update successful');
                 refreshTable()
@@ -99,10 +99,7 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
 
     useEffect(()=>{
         if(Object.values(course).length !== 0 && show===true){
-            form.setFieldsValue({
-                name: course.name,
-                description: course.description
-            });
+            
             setStudentRegisted(course.students.map(row=>({
                 key: row.id,
                 id: row.id,
@@ -112,10 +109,10 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
         }
         setCurrentPage(1);
     // eslint-disable-next-line
-    },[course,show])
+    },[course])
 
     useEffect(() => {
-        if(Object.values(course).length !== 0 && show===true){
+        if(Object.values(course).length !== 0){
             axios.get("/api/studentsPage",{
                 params:{
                     pageNo:currentPage - 1,
@@ -133,102 +130,100 @@ export const EditModal = ({ show, handleClose, course, refreshTable }) => {
                     }));
                     setStudentUnregisted(studentList);
                 }).catch(function(error){
-                    console.log('err',error);
                 });
-        }else{
-            form.setFieldsValue({
-                name: null,
-                description:  null
-            });
         }
+        
     // eslint-disable-next-line
-    },[course,show,currentPage]);
+    },[course,currentPage]);
     
     return (
-        
-        <Modal
-            visible={show}
-            title="Edit course"
-            okText= 'Save'
-            onOk={form.submit}
-            onCancel={handleClose}
-            width={1000}
-            forceRender={true}
-
-        >
-            <div style={{height:"560px"}}>
-            <Form 
-                {...layout} 
-                form={form} 
-                onFinish={showSaveConfirm}
-            > 
-                <Row gutter={14}>
-                    <Col className="gutter-row" span={12}>
-                        <Form.Item
-                            name={'name'}
-                            label="Name"
-                            rules={[
-                            {
-                                min:2,
-                                required: true,
-                            },]}
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Col>
-                    <Col className="gutter-row" span={12}>
-                        <Form.Item
-                            name={'description'}
-                            label="Description"
-                            rules={[
-                                {
-                                    max:254,
-                                    message:"Description should have at most 254 characters"
-                                },]}
-                        >
-                            <TextArea rows={3} />
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Row >
-                <Col span={12}>
-                    <Space direction="vertical">
-                        <Card title="Registered Student" style={{ width: 450 }}>
-                            <Table dataSource={studentRegisted} 
-                                columns={studentRegistedColums} 
-                                pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
-                                scroll={{ y: 260 }}
-                                size="small"
-                            />
-                        </Card>
-                    </Space>
-                </Col>
-                <Col span={12}>
-                <Space direction="vertical">
-                        <Card title="Unregistered Student" style={{ width: 450 }}>
-                        <Table 
-                            dataSource={studentUnregisted} 
-                            columns={studentUnregistedColums} 
-                            pagination={{ hideOnSinglePage: true }}
-                            scroll={{ y: 260 }}
-                            size="small"
-                        />
-                        <Pagination
-                            style={{marginTop:"16px",marginBottom:"16px",textAlign:"center"}}
-                            current={currentPage}
-                            pageSize= {4}
-                            total={totalElements}
-                            onChange={currentPageChange}
-                            size="small"
-                        />
-                        </Card>
-                    </Space>
-                </Col>
-            </Row>
+        <Formik
+            enableReinitialize
+            initialValues={initFormValue}
+            validationSchema={Yup.object({
+                name: Yup.string()
+                    .min(2, 'Name must be between 2 and 50 characters')
+                    .max(50, 'Name must be between 2 and 50 characters')
+                    .required('Required'),
+                description: Yup.string()
+                    .max(254, 'Age must be at most 254 characters'),
                 
-            </Form>
-            </div>
-        </Modal>
+            })}
+            onSubmit={(values, { setSubmitting,resetForm}) => {
+                setTimeout(() => {
+                showSaveConfirm(values);
+                setSubmitting(false);
+                resetForm({
+                    values:{ name: "", description:'' }
+                })
+                }, 200);
+            }}
+        >
+            {formik => (
+                <Modal
+                    visible={show}
+                    title="Edit course"
+                    okText= 'Save'
+                    onOk={formik.handleSubmit}
+                    onCancel={()=>{handleClose();formik.handleReset()}}
+                    width={1000}
+                    forceRender={true}
+        
+                >
+                    <div style={{minHeight:"600px"}}>
+                    <Form >
+                        <Row className="ant-form-item">
+                            <Col span={3} className="ant-form-item-label"><label htmlFor="name" className="ant-form-item-required">Name </label></Col>
+                            <Col span={8}>
+                                <Field name="name" type="text" className="ant-input"/>
+                                <ErrorMessage name="name" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                            <Col span={3} className="ant-form-item-label"><label htmlFor="name">Description </label></Col>
+                            <Col span={8}>
+                                <Field name="description" component="textarea" className="ant-input"/>
+                                <ErrorMessage name="description" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row >
+                        <Col span={12}>
+                            <Space direction="vertical">
+                                <Card title="Registered Student" style={{ width: 450 }}>
+                                    <Table dataSource={studentRegisted} 
+                                        columns={studentRegistedColums} 
+                                        pagination={{ position: ["bottomCenter"] ,pageSize: 4 }}
+                                        scroll={{ y: 260 }}
+                                        size="small"
+                                    />
+                                </Card>
+                            </Space>
+                        </Col>
+                        <Col span={12}>
+                            <Space direction="vertical">
+                                <Card title="Unregistered Student" style={{ width: 450 }}>
+                                    <Table 
+                                        dataSource={studentUnregisted} 
+                                        columns={studentUnregistedColums} 
+                                        pagination={{ hideOnSinglePage: true }}
+                                        scroll={{ y: 260 }}
+                                        size="small"
+                                    />
+                                    <Pagination
+                                        style={{marginTop:"16px",marginBottom:"16px",textAlign:"center"}}
+                                        current={currentPage}
+                                        pageSize= {4}
+                                        total={totalElements}
+                                        onChange={currentPageChange}
+                                        size="small"
+                                    />
+                                </Card>
+                            </Space>
+                        </Col>
+                    </Row>
+                    </Form>
+                    </div>
+                </Modal>
+            )}
+        </Formik>
     )
 
 }

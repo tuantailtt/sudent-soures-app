@@ -1,21 +1,12 @@
-import React, { useEffect} from 'react';
+import React from 'react';
 import axios from 'axios';
-import { Modal, Input, Select, Form, InputNumber, message } from 'antd';
-const { Option } = Select;
+import { Modal, Row,Col, message } from 'antd';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 const { confirm } = Modal;
 
 
 export const CreateModal = ({ show, handleClose, refreshTable }) => {
-
-    const [form] = Form.useForm();
-    const layout = {
-        labelCol: {
-          span: 7,
-        },
-        wrapperCol: {
-          span: 17,
-        },
-    };
     function showCreateConfirm(value){
         confirm({
             title: 'Are you sure create new Student ?',
@@ -27,24 +18,21 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
                 createStudent(value);
             },
             onCancel() {
-                console.log('Cancel');
             },
         });
     };
 
     function createStudent(value){
         let studentDto = {
-            "name": value.nameCreate === undefined ? null : value.nameCreate,
-            "yearOld": value.yearOldCreate === undefined ? null : value.yearOldCreate,
-            "sex": value.sexCreate === undefined ? null : value.sexCreate === "Female"? false:true,
-            "passportNumber": value.passportNumberCreate === undefined ? null: value.passportNumberCreate,
-            "phoneNumber": value.phoneNumberCreate === undefined ? null : value.phoneNumberCreate,
-            "address": value.addressCreate === undefined ? null : value.addressCreate,
+            "name": value.name === "" ? null : value.name,
+            "yearOld": value.yearOld === "" ? null : value.yearOld,
+            "sex": value.sex === "" ? null : value.sexC === "Female"? false:true,
+            "passportNumber": value.passportNumber === "" ? null: value.passportNumber,
+            "phoneNumber": value.phoneNumber === "" ? null : value.phoneNumber,
+            "address": value.address === "" ? null : value.addressC,
         }
-        console.log("studentDto",studentDto)
         axios.post('/api/students/',studentDto)
             .then(function(response){
-                console.log(response);
                 handleClose();
                 message.success('Create successful');
                 refreshTable();
@@ -53,116 +41,95 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
                 message.error('Create failed');
             });
     }
-    useEffect(() => {
-        if(!show) {
-            form.setFieldsValue({
-                nameCreate: null,
-                yearOldCreate: 1,
-                sexCreate: "Male",
-                passportNumberCreate: null,
-                phoneNumberCreate:null,
-                addressCreate:null
-            })
-        }
-    // eslint-disable-next-line
-    }, [show])
-
-    
 
     return (
-        <Modal
-            visible={show}
-            title="Create new student"
-            okText= 'Create'
-            onOk={form.submit}
-            onCancel={handleClose}
-            forceRender={true}
-
+        <Formik
+            enableReinitialize
+            initialValues={{ name: "", yearOld: 1, sex:"Male",address:'',passportNumber:'',phoneNumber:'' }}
+            validationSchema={Yup.object({
+                name: Yup.string()
+                    .min(2, 'Name must be between 2 and 50 characters')
+                    .max(50, 'Name must be between 2 and 50 characters')
+                    .required('Required'),
+                yearOld: Yup.number()
+                    .min(1, 'Age must be between 1 and 150')
+                    .max(150, 'Age must be between 1 and 150'),
+                address: Yup.string()
+                    .max(254, 'Address must have at most 254 characters'),
+                passportNumber: Yup.string()
+                    .matches(/^[0-9]+$/, "Must be only digits")
+                    .min(5,'Passport number should be between 5 and 15 characters')
+                    .max(15,'Passport number should be between 5 and 15 characters'),
+                phoneNumber: Yup.string()
+                    .matches(/^[0-9]+$/, "Must be only digits")
+                    .min(5,'Phone number should be between 5 and 15 characters')
+                    .max(15,'Phone number should be between 5 and 15 characters'),
+            })}
+            onSubmit={(values, { setSubmitting,resetForm}) => {
+                setTimeout(() => {
+                showCreateConfirm(values);
+                setSubmitting(false);
+                resetForm({
+                    values:{ name: "", yearOld: 1, sex:"Male",address:'',passportNumber:'',phoneNumber:'' }
+                })
+                }, 200);
+            }}
         >
-            <Form {...layout} form={form} onFinish={showCreateConfirm}>
-                <Form.Item
-                    name={'nameCreate'}
-                    label="Name"
-                    rules={[
-                        {
-                            min:2,
-                            max:50,
-                            message: "Name must be between 2 and 50 characters",
-                            
-                        },
-                        {
-                            required: true,
-                            message: "Name is not required"
-                        }
-                    ]}
+            {formik => (
+                <Modal
+                    visible={show}
+                    title="Create new student"
+                    okText= 'Create'
+                    onOk={formik.handleSubmit}
+                    onCancel={handleClose}
+                    forceRender={true}
                 >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'yearOldCreate'}
-                    label="Age"
-                    rules={[
-                    {
-                        type: 'number',
-                        min: 1,
-                        max: 150,
-                        message: "Age must be between 1 and 150"
-                    },]}
-                >
-                        <InputNumber />
-                </Form.Item>
-                <Form.Item 
-                    name={'sexCreate'}
-                    label="Sex"
-                >
-                        <Select >
-                            <Option value="Female">Female</Option>
-                            <Option value="Male">Male</Option>
-                        </Select>
-                </Form.Item>
-                <Form.Item
-                    name={'passportNumberCreate'}
-                    label="Passport Number"
-                    rules={[
-                        {
-                            min: 5,
-                            max: 15,
-                            message: "Passport number must be between 5 and 15 characters",
-                        },{
-                            pattern:/^[0-9]+$/,
-                            message: "Passport number should be number string"
-                        }]}
-                >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'phoneNumberCreate'}
-                    label="Phone Number"
-                    rules={[
-                        {
-                            min: 5,
-                            max: 15,
-                            message: "Phone number must be between 5 and 15 characters",
-                            
-                        },{
-                            pattern:/^[0-9]+$/,
-                            message: "Phone number should be number string"
-                        }]}
-                >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'addressCreate'}
-                    label="Address"
-                    rules={[
-                        {
-                            max: 254,
-                            message: "Address must be at most 254 charcaters",
-                        },]}
-                >
-                    <Input />
-                </Form.Item>
-            </Form>
-        </Modal>
+                    <Form >
+                        <Row className="ant-form-item">
+                            <Col span={6} className="ant-form-item-label"><label htmlFor="name" className="ant-form-item-required">Name </label></Col>
+                            <Col span={16}>
+                                <Field name="name" type="text" className="ant-input"/>
+                                <ErrorMessage name="name" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="yearOld" >Age </label></Col>
+                            <Col span={7} >
+                                <Field name="yearOld" type="number" className="ant-input"/>
+                                <ErrorMessage name="yearOld" component="div" className="ant-form-item-explain ant-form-item-explain-error" />
+                            </Col>
+                            <Col span={3} className="ant-form-item-label"><label htmlFor="sex">Sex </label></Col>
+                            <Col span={6}>
+                                <Field name="sex" as="select" className="ant-input" >
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </Field>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="address">Address </label></Col>
+                            <Col span={16}>
+                                <Field name="address" type="text" className="ant-input" />
+                                <ErrorMessage name="address" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="passportNumber">Passport number </label></Col>
+                            <Col span={16}>
+                                <Field name="passportNumber" type="text" className="ant-input" />
+                                <ErrorMessage name="passportNumber" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="phoneNumber">Phone number </label></Col>
+                            <Col span={16}>
+                                <Field name="phoneNumber" type="text" className="ant-input" />
+                                <ErrorMessage name="phoneNumber" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Modal>
+            )}
+        </Formik>
     )
 }

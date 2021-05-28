@@ -1,20 +1,28 @@
-import React, { useEffect} from 'react';
+import React from 'react';
 import axios from 'axios';
-import { Modal, Input, Select,Form, InputNumber,message } from 'antd';
-const { Option } = Select;
+import { Modal, Row,Col,message } from 'antd';
+import { Formik, Field, Form, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 const { confirm } = Modal;
 
 
 export const EditModal = ({ show, handleClose, student, refreshTable }) => {
 
-    const [form] = Form.useForm();
-    const layout = {
-        labelCol: {
-          span: 7,
-        },
-        wrapperCol: {
-          span: 17,
-        },
+    var initFormValue = Object.values(student).length !== 0 ? 
+    { 
+        name: student.name !== null ? student.name:"",
+        yearOld: student.yearOld, 
+        sex: student.sex !== null ? student.sex:"",
+        address: student.address !== null ? student.address:"",
+        passportNumber: student.passportNumber !== null ? student.passportNumber:"",
+        phoneNumber:student.phoneNumber !== null ? student.phoneNumber:""
+    }:{ 
+        name: "", 
+        yearOld: 1, 
+        sex:"Male",
+        address:'',
+        passportNumber:'',
+        phoneNumber:'' 
     };
     function showSaveConfirm(value){
         confirm({
@@ -53,118 +61,93 @@ export const EditModal = ({ show, handleClose, student, refreshTable }) => {
                 message.error('Create failed');
             });
     }
-    useEffect(() => {
-        if(Object.values(student).length !== 0 || show===true) {
-            form.setFieldsValue({
-                name: student.name,
-                yearOld: student.yearOld,
-                sex: student.sex,
-                passportNumber: student.passportNumber,
-                phoneNumber: student.phoneNumber,
-                address: student.address
-            })
-        }else{
-            form.setFieldsValue({
-                name: null,
-                yearOld: 1,
-                sex: "1",
-                passportNumber: null,
-                phoneNumber:null,
-                address:null
-            })
-        }
-    // eslint-disable-next-line
-    }, [student,show])
-
-    
 
     return (
-        <Modal
-            visible={show}
-            title="Edit student"
-            okText= 'Save'
-            onOk={form.submit}
-            onCancel={handleClose}
-            forceRender={true}
+        <Formik
+            enableReinitialize
+            initialValues={initFormValue}
+            validationSchema={Yup.object({
+                name: Yup.string()
+                    .min(2, 'Name must be between 2 and 50 characters')
+                    .max(50, 'Name must be between 2 and 50 characters')
+                    .required('Required'),
+                yearOld: Yup.number()
+                    .min(1, 'Age must be between 1 and 150')
+                    .max(150, 'Age must be between 1 and 150'),
+                address: Yup.string()
+                    .max(254, 'Address must have at most 254 characters'),
+                passportNumber: Yup.string()
+                    .matches(/^[0-9]+$/, "Must be only digits")
+                    .min(5,'Passport number should be between 5 and 15 characters')
+                    .max(15,'Passport number should be between 5 and 15 characters'),
+                phoneNumber: Yup.string()
+                    .matches(/^[0-9]+$/, "Must be only digits")
+                    .min(5,'Phone number should be between 5 and 15 characters')
+                    .max(15,'Phone number should be between 5 and 15 characters'),
+            })}
+            onSubmit={(values, { setSubmitting}) => {
+                setTimeout(() => {
+                showSaveConfirm(values);
+                setSubmitting(false);
+                }, 200);
+            }}
             
         >
-            <Form {...layout} form={form} onFinish={showSaveConfirm}>
-                <Form.Item
-                    name={'name'}
-                    label="Name"
-                    rules={[
-                        {
-                            min:2,
-                            max:50,
-                            message: "Name must be between 2 and 50 characters",
-                            
-                        },
-                        {
-                            required: true,
-                            message: "Name is not required"
-                        }
-                    ]}
+            {formik => (
+                <Modal
+                    visible={show}
+                    title="Edit student"
+                    okText= 'Save'
+                    onOk={formik.handleSubmit}
+                    onCancel={()=>{handleClose();formik.handleReset()}}
+                    forceRender={true}
                 >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'yearOld'}
-                    label="Age"
-                    rules={[
-                    {
-                        type: 'number',
-                        min: 1,
-                        max: 150,
-                        message: "Age must be between 1 and 150"
-                    },]}
-                >
-                        <InputNumber />
-                </Form.Item>
-                <Form.Item 
-                    name={'sex'}
-                    label="Sex"
-                >
-                        <Select >
-                            <Option value="Female">Female</Option>
-                            <Option value="Male">Male</Option>
-                        </Select>
-                </Form.Item>
-                <Form.Item
-                    name={'passportNumber'}
-                    label="Passport Number"
-                    rules={[
-                        {
-                            min: 5,
-                            max: 15,
-                            message: "Passport number must be between 5 and 15 characters"
-                        },]}
-                >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'phoneNumber'}
-                    label="Phone Number"
-                    rules={[
-                        {
-                            min: 5,
-                            max: 15,
-                            message: "Phone number must be between 5 and 15 characters"
-                        },]}
-                >
-                    <Input />
-                </Form.Item>
-                <Form.Item
-                    name={'address'}
-                    label="Address"
-                    rules={[
-                        {
-                            max: 254,
-                            message: "Address must be at most 254 characters"
-                        },]}
-                >
-                    <Input />
-                </Form.Item>
-            </Form>
-        </Modal>
+                    <Form >
+                        <Row className="ant-form-item">
+                            <Col span={6} className="ant-form-item-label"><label htmlFor="name" className="ant-form-item-required">Name </label></Col>
+                            <Col span={16}>
+                                <Field name="name" type="text" className="ant-input"/>
+                                <ErrorMessage name="name" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="yearOld" >Age </label></Col>
+                            <Col span={7} >
+                                <Field name="yearOld" type="number" className="ant-input"/>
+                                <ErrorMessage name="yearOld" component="div" className="ant-form-item-explain ant-form-item-explain-error" />
+                            </Col>
+                            <Col span={3} className="ant-form-item-label"><label htmlFor="sex">Sex </label></Col>
+                            <Col span={6}>
+                                <Field name="sex" as="select" className="ant-input" >
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </Field>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="address">Address </label></Col>
+                            <Col span={16}>
+                                <Field name="address" type="text" className="ant-input" />
+                                <ErrorMessage name="address" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="passportNumber">Passport number </label></Col>
+                            <Col span={16}>
+                                <Field name="passportNumber" type="text" className="ant-input" />
+                                <ErrorMessage name="passportNumber" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                        <Row className="ant-form-item">
+                            <Col span={6} className ="ant-form-item-label"><label htmlFor="phoneNumber">Phone number </label></Col>
+                            <Col span={16}>
+                                <Field name="phoneNumber" type="text" className="ant-input" />
+                                <ErrorMessage name="phoneNumber" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Modal>
+            )}
+        </Formik>
     )
 }
