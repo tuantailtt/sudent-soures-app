@@ -26,7 +26,7 @@ function CourseList(){
     const [descriptionSearch,setDescriptionSearch]=useState('');
 
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name',sorter: {multiple: 1,}, width: '30%',
+        { title: 'Name', dataIndex: 'name',key: 'name',sorter: {multiple: 1,}, width: '25%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                 <Input
@@ -55,7 +55,7 @@ function CourseList(){
             filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
         },
             
-        { title: 'Description', dataIndex: 'description',key: 'description',sorter: {multiple: 1,}, width: '50%',
+        { title: 'Description', dataIndex: 'description',key: 'description',sorter: {multiple: 1,},
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                 <Input
@@ -84,7 +84,11 @@ function CourseList(){
             filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
         },
         {
-            title: 'Action',dataIndex: '',key: 'x',align:"center", width: '20%',
+            title: 'Cost', dataIndex: 'cost',key: 'cost',align:"center", width: '10%'
+        },
+        
+        {
+            title: 'Action',dataIndex: '',key: 'x',align:"center", width: '15%',
             render: (course) => (
                 <div>
                     <Button type="primary" onClick={() => showEditModal(course)} style={{margin:"0px 2px 0px 2px"}}>Edit</Button>
@@ -204,6 +208,7 @@ function CourseList(){
                     id: row.id,
                     name: row.name,
                     description: row.description,
+                    cost: row.cost,
                     students: row.students
                 }));
                 setData(list);

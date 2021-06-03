@@ -72,6 +72,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
         let courseDto = {
             "name": value.name === "" ? null : value.name,
             "description": value.description === "" ? null : value.description,
+            "cost":value.cost ===""? null:value.cost,
             "students": studentRegisted.map(student => {
                 return {"id":student.id}
             })
@@ -113,7 +114,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
     return (
         <Formik
             enableReinitialize
-            initialValues={{ name: "", description: "" }}
+            initialValues={{ name: "", description: "",cost:0 }}
             validationSchema={Yup.object({
                 name: Yup.string()
                     .min(2, 'Name must be between 2 and 50 characters')
@@ -121,14 +122,15 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                     .required('Required'),
                 description: Yup.string()
                     .max(254, 'Age must be at most 254 characters'),
-                
+                cost: Yup.number()
+                    .min(0, "Cost must be at least 0"),
             })}
             onSubmit={(values, { setSubmitting,resetForm}) => {
                 setTimeout(() => {
                 showCreateConfirm(values);
                 setSubmitting(false);
                 resetForm({
-                    values:{ name: "", description:'' }
+                    values:{ name: "", description:'' ,cost:0}
                 })
                 }, 200);
             }}
@@ -147,13 +149,18 @@ export const CreateModal = ({ show, handleClose, refreshTable }) =>{
                     <div style={{minHeight:"600px"}}>
                     <Form >
                         <Row className="ant-form-item">
-                            <Col span={3} className="ant-form-item-label"><label htmlFor="name" className="ant-form-item-required">Name </label></Col>
-                            <Col span={8}>
+                            <Col span={2} className="ant-form-item-label"><label htmlFor="name" className="ant-form-item-required">Name </label></Col>
+                            <Col span={5}>
                                 <Field name="name" type="text" className="ant-input"/>
                                 <ErrorMessage name="name" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
                             </Col>
+                            <Col span={2} className="ant-form-item-label"><label htmlFor="cost" className="ant-form-item-required">Cost </label></Col>
+                            <Col span={4}>
+                                <Field name="cost" type="number" className="ant-input"/>
+                                <ErrorMessage name="cost" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
+                            </Col>
                             <Col span={3} className="ant-form-item-label"><label htmlFor="name">Description </label></Col>
-                            <Col span={8}>
+                            <Col span={7}>
                                 <Field name="description" component="textarea" className="ant-input"/>
                                 <ErrorMessage name="description" component="div" className="ant-form-item-explain ant-form-item-explain-error"/>
                             </Col>

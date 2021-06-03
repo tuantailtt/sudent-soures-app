@@ -72,7 +72,7 @@ export const CreateModal = ({ show, handleClose, refreshTable }) => {
                 resetForm({
                     values:{ name: "", yearOld: 1, sex:"Male",address:'',passportNumber:'',phoneNumber:'' }
                 })
-                }, 200);
+                }, 0);
             }}
         >
             {formik => (
