@@ -5,7 +5,7 @@ import { UserAddOutlined,SearchOutlined} from '@ant-design/icons';
 import { CreateModal } from './create-modal';
 import { EditModal } from './edit-modal';
 import { RegisterModal } from './register-modal';
-
+import {Link} from "react-router-dom";
 
 const { confirm } = Modal;
 const { Option } = Select;
@@ -32,7 +32,7 @@ function StudentList() {
     const [phoneSearch,setPhoneSearch]=useState('');
 
     const columns = [
-        { title: 'Name', dataIndex: 'name',key: 'name', sorter: {multiple: 1,},width: '15%',
+        { title: 'Name', dataIndex: '',key: 'x', sorter: {multiple: 1,},width: '15%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                 <Input
@@ -59,6 +59,9 @@ function StudentList() {
                 </div>
             ),
             filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+            render: (student) =>(
+                <Link to={`/admin/student/${student.id}`}>{student.name}</Link>
+            )
         }, 
         { title: 'Age', dataIndex: 'yearOld',key: 'yearOld',sorter: { multiple: 2,}, width: '5%', align:"center" ,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (

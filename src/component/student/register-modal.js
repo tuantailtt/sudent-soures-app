@@ -75,9 +75,10 @@ export const RegisterModal = ({ show, handleClose,student , refreshTable }) =>{
             "passportNumber": student.passportNumber,
             "phoneNumber": student.phoneNumber,
             "courses": coursesRegisted.map(course => {
-                return {"id":course.id}
+                return {"id":course.id,"paid":course.paid === null || course.paid === undefined ? false: course.paid}
             })
         };
+        console.log('stuDto',studentDto);
         axios.put("/api/students/"+student.id,studentDto)
             .then(function(response){
                 handleClose();
@@ -95,7 +96,8 @@ export const RegisterModal = ({ show, handleClose,student , refreshTable }) =>{
                 key: row.id,
                 id: row.id,
                 name: row.name,
-                description: row.description
+                description: row.description,
+                paid: row.paid
             })));
         }
         setCurrentPage(1);

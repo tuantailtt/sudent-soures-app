@@ -15,8 +15,12 @@ import React, {useState} from 'react';
 import StudentList from './component/student/StudentList';
 import CourseList from './component/course/CourseList';
 import Welcome from './Welcome';
+import StudentDetail from './component/student/Student-detail';
+import CourseInStudentDetail from './component/student/CourseInStudentDetail';
+
 import logo from './image/logo192.png';
 const { Header, Content, Footer, Sider } = Layout;
+
 
 function App() {
 
@@ -50,7 +54,7 @@ function App() {
           <Header className="site-layout-background" style={{ padding: 0 }} />
           <Content style={{ margin: '0 16px' }}>
             <Switch>
-            <Route path="/admin/welcome">
+            <Route path="/admin/welcome" exact>
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Welcome</Breadcrumb.Item>
@@ -59,7 +63,7 @@ function App() {
                   <Welcome />
                 </Card>
               </Route>
-              <Route path="/admin/students">
+              <Route path="/admin/students" exact>
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Students</Breadcrumb.Item>
@@ -68,7 +72,7 @@ function App() {
                   <StudentList />
                 </Card>
               </Route>
-              <Route path="/admin/courses">
+              <Route path="/admin/courses" exact>
                 <Breadcrumb style={{ margin: '16px 0' }}>
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Cousrses</Breadcrumb.Item>
@@ -76,6 +80,12 @@ function App() {
                 <Card title="Courses Management ">
                   <CourseList />
                 </Card>
+              </Route>
+              <Route path="/admin/student/:id?" exact>
+                <StudentDetail />
+              </Route>
+              <Route path="/admin/student/:studentId?/course/:courseId?" exact>
+                <CourseInStudentDetail />
               </Route>
             </Switch>
           </Content>
