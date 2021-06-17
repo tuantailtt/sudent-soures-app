@@ -68,7 +68,7 @@ function App() {
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   <Breadcrumb.Item>Students</Breadcrumb.Item>
                 </Breadcrumb>
-                <Card title="Students Management" >
+                <Card  >
                   <StudentList />
                 </Card>
               </Route>

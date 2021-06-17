@@ -86,11 +86,12 @@ function CourseInStudentDetail(){
             }else{
                 setContentHtml ((
                 <div style={{textAlign:"center"}}>
-                    <Button type="primary" onClick={()=>showPaymentConfirm(studentId,courseId)}>Pay to access content course</Button>
+                    <Button type="primary" onClick={()=>showPaymentConfirm(studentId,courseId)}>Pay to access course content</Button>
                 </div>
                 )) ;
             }
         })
+// eslint-disable-next-line           
     },[refresh])
 
 
@@ -117,7 +118,7 @@ function CourseInStudentDetail(){
         <Panel header="Content course" key="2">
          {contentHtml}
         </Panel>
-      </Collapse>,
+      </Collapse>
       </Card>
     </div>
     )
