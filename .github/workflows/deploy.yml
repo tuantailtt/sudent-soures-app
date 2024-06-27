@@ -6,9 +6,8 @@ on:
       - product  # Adjust branch name as needed
 
 jobs:
-  deploy:
+  build: 
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -23,10 +22,15 @@ jobs:
 
       - name: Build
         run: npm run build
-
+        
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.4
-        with:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          BRANCH: gh-pages  # Specify the branch where GitHub Pages will deploy (usually gh-pages)
-          FOLDER: build  # Specify the folder where the built React app is located
+        id: deployment
+        uses: actions/deploy-pages@v2
+
